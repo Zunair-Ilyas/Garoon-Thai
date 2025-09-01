@@ -1,13 +1,49 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/Layout";
 import { Star, Clock, Users, Award, ArrowRight, Utensils, Heart, Globe } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-thai-dishes.jpg";
 import restaurantInterior from "@/assets/restaurant-interior.jpg";
 
+interface Testimonial {
+  id: string;
+  name: string;
+  rating: number;
+  text: string;
+  is_active: boolean;
+}
+
+interface StatItem {
+  id: string;
+  icon_name: string;
+  value: string;
+  label: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+interface Feature {
+  id: string;
+  icon_name: string;
+  title: string;
+  description: string;
+  display_order: number;
+  is_active: boolean;
+}
+
 const Index = () => {
-  const features = [
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [stats, setStats] = useState<StatItem[]>([]);
+  const [features, setFeatures] = useState<Feature[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Default features in case database is empty
+  const defaultFeatures = [
     {
       icon: Utensils,
       title: "Authentic Recipes",
@@ -25,30 +61,103 @@ const Index = () => {
     }
   ];
 
-  const stats = [
+  // Default stats in case database is empty
+  const defaultStats = [
     { icon: Star, value: "4.9", label: "Rating" },
     { icon: Clock, value: "25+", label: "Years Experience" },
     { icon: Users, value: "10K+", label: "Happy Customers" },
     { icon: Award, value: "15+", label: "Awards Won" }
   ];
 
-  const testimonials = [
+  // Default testimonials in case database is empty
+  const defaultTestimonials = [
     {
+      id: "1",
       name: "Sarah Johnson",
       rating: 5,
       text: "The best Thai food I've ever had! The pad thai is absolutely incredible."
     },
     {
+      id: "2",
       name: "Michael Chen",
       rating: 5,
       text: "Authentic flavors and amazing service. This place feels like Thailand!"
     },
     {
+      id: "3",
       name: "Emma Davis",
       rating: 5,
       text: "Every dish is a masterpiece. The atmosphere is so warm and welcoming."
     }
   ];
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // For now, use default data since we don't have these tables yet
+      // In a real implementation, you would fetch from database tables
+      setFeatures(defaultFeatures.map((f, i) => ({ 
+        id: `feature-${i}`, 
+        icon_name: f.icon.name || 'Utensils', 
+        title: f.title, 
+        description: f.description, 
+        display_order: i, 
+        is_active: true 
+      })));
+      
+      setStats(defaultStats.map((s, i) => ({ 
+        id: `stat-${i}`, 
+        icon_name: s.icon.name || 'Star', 
+        value: s.value, 
+        label: s.label, 
+        display_order: i, 
+        is_active: true 
+      })));
+      
+      setTestimonials(defaultTestimonials);
+      
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load page data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIcon = (iconName: string) => {
+    const iconMap: { [key: string]: any } = {
+      Star,
+      Clock,
+      Users,
+      Award,
+      Utensils,
+      Heart,
+      Globe
+    };
+    return iconMap[iconName] || Utensils;
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-thai-gold mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -106,21 +215,24 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="card-elegant border-thai-gold/20 animate-scale-in" style={{ animationDelay: `${index * 0.2}s` }}>
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-hero-gradient rounded-full flex items-center justify-center mx-auto mb-6">
-                    <feature.icon className="h-8 w-8 text-thai-charcoal" />
-                  </div>
-                  <h3 className="font-playfair text-xl font-semibold mb-4 text-foreground">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+            {features.map((feature, index) => {
+              const IconComponent = getIcon(feature.icon_name);
+              return (
+                <Card key={feature.id} className="card-elegant border-thai-gold/20 animate-scale-in" style={{ animationDelay: `${index * 0.2}s` }}>
+                  <CardContent className="p-8 text-center">
+                    <div className="w-16 h-16 bg-hero-gradient rounded-full flex items-center justify-center mx-auto mb-6">
+                      <IconComponent className="h-8 w-8 text-thai-charcoal" />
+                    </div>
+                    <h3 className="font-playfair text-xl font-semibold mb-4 text-foreground">
+                      {feature.title}
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -129,15 +241,18 @@ const Index = () => {
       <section className="py-16 bg-thai-charcoal">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="w-12 h-12 bg-hero-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="h-6 w-6 text-thai-charcoal" />
+            {stats.map((stat, index) => {
+              const IconComponent = getIcon(stat.icon_name);
+              return (
+                <div key={stat.id} className="text-center animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="w-12 h-12 bg-hero-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+                    <IconComponent className="h-6 w-6 text-thai-charcoal" />
+                  </div>
+                  <div className="text-3xl font-bold text-thai-gold mb-2">{stat.value}</div>
+                  <div className="text-thai-beige-light text-sm">{stat.label}</div>
                 </div>
-                <div className="text-3xl font-bold text-thai-gold mb-2">{stat.value}</div>
-                <div className="text-thai-beige-light text-sm">{stat.label}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -191,7 +306,7 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="card-elegant border-thai-gold/20 animate-scale-in" style={{ animationDelay: `${index * 0.2}s` }}>
+              <Card key={testimonial.id} className="card-elegant border-thai-gold/20 animate-scale-in" style={{ animationDelay: `${index * 0.2}s` }}>
                 <CardContent className="p-6">
                   <div className="flex mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (

@@ -73,32 +73,46 @@ const CategoryManager = () => {
   };
 
   const onSubmit = async (data: CategoryFormData) => {
+    console.log('Submitting category data:', data);
     setLoading(true);
     try {
       const categoryData = {
         ...data,
-        display_order: parseInt(data.display_order || "0")
+        display_order: parseInt(data.display_order || "0"),
+        is_active: data.is_active ?? true
       };
 
+      console.log('Processed category data:', categoryData);
+
       if (editingCategory) {
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('menu_categories')
           .update(categoryData)
-          .eq('id', editingCategory.id);
+          .eq('id', editingCategory.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
 
+        console.log('Update result:', result);
         toast({
           title: "Success",
           description: "Category updated successfully",
         });
       } else {
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('menu_categories')
-          .insert([categoryData]);
+          .insert([categoryData])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
 
+        console.log('Insert result:', result);
         toast({
           title: "Success",
           description: "Category created successfully",
@@ -107,13 +121,15 @@ const CategoryManager = () => {
 
       setIsDialogOpen(false);
       setEditingCategory(null);
-      reset();
-      fetchCategories();
+      reset({
+        is_active: true
+      });
+      await fetchCategories();
     } catch (error) {
       console.error('Error saving category:', error);
       toast({
         title: "Error",
-        description: "Failed to save category",
+        description: `Failed to save category: ${error.message || error}`,
         variant: "destructive",
       });
     } finally {
@@ -158,7 +174,12 @@ const CategoryManager = () => {
 
   const handleNewCategory = () => {
     setEditingCategory(null);
-    reset();
+    reset({
+      is_active: true,
+      name: "",
+      description: "",
+      display_order: "0"
+    });
     setIsDialogOpen(true);
   };
 

@@ -22,6 +22,8 @@ import {
 import MenuManager from "@/components/admin/MenuManager";
 import ArticleManager from "@/components/admin/ArticleManager";
 import ContactManager from "@/components/admin/ContactManager";
+import ContactMessageManager from "@/components/admin/ContactMessageManager";
+import NewsletterSubscriberManager from "@/components/admin/NewsletterSubscriberManager";
 import SEOManager from "@/components/admin/SEOManager";
 import UserManager from "@/components/admin/UserManager";
 import CategoryManager from "@/components/admin/CategoryManager";
@@ -29,12 +31,44 @@ import CategoryManager from "@/components/admin/CategoryManager";
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState({
     menuItems: 0,
     articles: 0,
     subscribers: 0,
     profiles: 0
   });
+
+  // Update stats with real-time data from localStorage
+  useEffect(() => {
+    const updateStats = () => {
+      try {
+        // Get newsletter subscribers count
+        const subscribers = JSON.parse(localStorage.getItem('newsletter_subscriptions') || '[]');
+        const activeSubscribers = subscribers.filter((sub: any) => sub.is_subscribed).length;
+        
+        // Get contact messages count
+        const messages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+        const pendingMessages = messages.filter((msg: any) => msg.status === 'pending').length;
+        
+        setStats(prev => ({
+          ...prev,
+          subscribers: activeSubscribers,
+          // You can add more real-time stats here
+        }));
+      } catch (error) {
+        console.error('Error updating stats:', error);
+      }
+    };
+
+    // Update stats immediately
+    updateStats();
+    
+    // Update stats every 5 seconds
+    const interval = setInterval(updateStats, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchStats();
@@ -134,13 +168,15 @@ const Dashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="menu">Menu</TabsTrigger>
             <TabsTrigger value="articles">Articles</TabsTrigger>
             <TabsTrigger value="contact">Contact</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="subscribers">Subscribers</TabsTrigger>
             <TabsTrigger value="seo">SEO</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
@@ -165,46 +201,71 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {/* Quick Actions */}
+                        {/* Quick Actions */}
             <Card className="card-elegant border-thai-gold/20">
               <CardHeader>
                 <CardTitle className="font-playfair text-xl">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button 
-                    variant="hero" 
+                  <Button
+                    variant="hero"
                     className="h-16 flex-col space-y-2"
-                    onClick={() => {
-                      const menuTab = document.querySelector('[value="menu"]') as HTMLElement;
-                      menuTab?.click();
-                    }}
+                    onClick={() => setActiveTab("menu")}
                   >
                     <Utensils className="h-6 w-6" />
                     <span>Add Menu Item</span>
                   </Button>
-                  <Button 
-                    variant="elegant" 
+                  <Button
+                    variant="elegant"
                     className="h-16 flex-col space-y-2"
-                    onClick={() => {
-                      const articlesTab = document.querySelector('[value="articles"]') as HTMLElement;
-                      articlesTab?.click();
-                    }}
+                    onClick={() => setActiveTab("articles")}
                   >
                     <FileText className="h-6 w-6" />
                     <span>Write Article</span>
                   </Button>
-                  <Button 
-                    variant="accent" 
+                  <Button
+                    variant="accent"
                     className="h-16 flex-col space-y-2"
-                    onClick={() => {
-                      const seoTab = document.querySelector('[value="seo"]') as HTMLElement;
-                      seoTab?.click();
-                    }}
+                    onClick={() => setActiveTab("seo")}
                   >
                     <Settings className="h-6 w-6" />
                     <span>Update Settings</span>
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* System Status */}
+            <Card className="card-elegant border-thai-gold/20">
+              <CardHeader>
+                <CardTitle className="font-playfair text-xl">System Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium">Newsletter System</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Local Storage</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium">Contact Form</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Local Storage</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span className="text-sm font-medium">Database</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">RLS Blocked</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -240,6 +301,14 @@ const Dashboard = () => {
 
           <TabsContent value="contact">
             <ContactManager />
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <ContactMessageManager />
+          </TabsContent>
+
+          <TabsContent value="subscribers">
+            <NewsletterSubscriberManager />
           </TabsContent>
 
           <TabsContent value="seo">

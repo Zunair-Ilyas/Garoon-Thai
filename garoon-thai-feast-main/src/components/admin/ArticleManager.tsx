@@ -83,6 +83,7 @@ const ArticleManager = () => {
   };
 
   const onSubmit = async (data: ArticleFormData) => {
+    console.log('Submitting article data:', data);
     setLoading(true);
     try {
       const articleData = {
@@ -90,25 +91,37 @@ const ArticleManager = () => {
         published_at: data.status === "published" ? new Date().toISOString() : null
       };
 
+      console.log('Processed article data:', articleData);
+
       if (editingArticle) {
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('articles')
           .update(articleData)
-          .eq('id', editingArticle.id);
+          .eq('id', editingArticle.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
 
+        console.log('Update result:', result);
         toast({
           title: "Success",
           description: "Article updated successfully",
         });
       } else {
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('articles')
-          .insert([articleData]);
+          .insert([articleData])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
 
+        console.log('Insert result:', result);
         toast({
           title: "Success",
           description: "Article created successfully",
@@ -117,13 +130,15 @@ const ArticleManager = () => {
 
       setIsDialogOpen(false);
       setEditingArticle(null);
-      reset();
-      fetchArticles();
+      reset({
+        status: "draft"
+      });
+      await fetchArticles();
     } catch (error) {
       console.error('Error saving article:', error);
       toast({
         title: "Error",
-        description: "Failed to save article",
+        description: `Failed to save article: ${error.message || error}`,
         variant: "destructive",
       });
     } finally {
@@ -172,7 +187,16 @@ const ArticleManager = () => {
 
   const handleNewArticle = () => {
     setEditingArticle(null);
-    reset();
+    reset({
+      status: "draft",
+      title: "",
+      content: "",
+      category: "",
+      featured_image: "",
+      meta_title: "",
+      meta_description: "",
+      meta_keywords: ""
+    });
     setIsDialogOpen(true);
   };
 

@@ -66,7 +66,10 @@ const MenuManager = () => {
   const { toast } = useToast();
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<MenuItemFormData>({
-    resolver: zodResolver(menuItemSchema)
+    resolver: zodResolver(menuItemSchema),
+    defaultValues: {
+      is_active: true
+    }
   });
 
   const isActive = watch("is_active");
@@ -110,32 +113,47 @@ const MenuManager = () => {
   };
 
   const onSubmit = async (data: MenuItemFormData) => {
+    console.log('Submitting menu item data:', data);
     setLoading(true);
     try {
       const menuItemData = {
         ...data,
-        price: parseFloat(data.price)
+        price: parseFloat(data.price),
+        category_id: data.category_id || null,
+        is_active: data.is_active ?? true
       };
 
+      console.log('Processed menu item data:', menuItemData);
+
       if (editingItem) {
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('menu_items')
           .update(menuItemData)
-          .eq('id', editingItem.id);
+          .eq('id', editingItem.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
 
+        console.log('Update result:', result);
         toast({
           title: "Success",
           description: "Menu item updated successfully",
         });
       } else {
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('menu_items')
-          .insert([menuItemData]);
+          .insert([menuItemData])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
 
+        console.log('Insert result:', result);
         toast({
           title: "Success",
           description: "Menu item created successfully",
@@ -144,13 +162,15 @@ const MenuManager = () => {
 
       setIsDialogOpen(false);
       setEditingItem(null);
-      reset();
-      fetchMenuItems();
+      reset({
+        is_active: true
+      });
+      await fetchMenuItems();
     } catch (error) {
       console.error('Error saving menu item:', error);
       toast({
         title: "Error",
-        description: "Failed to save menu item",
+        description: `Failed to save menu item: ${error.message || error}`,
         variant: "destructive",
       });
     } finally {
@@ -202,7 +222,19 @@ const MenuManager = () => {
 
   const handleNewItem = () => {
     setEditingItem(null);
-    reset();
+    reset({
+      is_active: true,
+      name: "",
+      description: "",
+      price: "",
+      category_id: "",
+      image_url: "",
+      delivery_link: "",
+      pickup_link: "",
+      meta_title: "",
+      meta_description: "",
+      meta_keywords: ""
+    });
     setIsDialogOpen(true);
   };
 
@@ -270,11 +302,15 @@ const MenuManager = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="category_id">Category</Label>
-                  <Select onValueChange={(value) => setValue("category_id", value)}>
+                  <Select 
+                    value={watch("category_id") || ""} 
+                    onValueChange={(value) => setValue("category_id", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">No category</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}

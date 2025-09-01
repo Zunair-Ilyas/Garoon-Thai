@@ -73,21 +73,34 @@ const SEOManager = () => {
   };
 
   const onSubmit = async (data: SEOFormData) => {
+    console.log('Submitting SEO settings data:', data);
     setLoading(true);
     try {
       if (seoSettings) {
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('seo_settings')
           .update(data)
-          .eq('id', seoSettings.id);
+          .eq('id', seoSettings.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
+
+        console.log('Update result:', result);
       } else {
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('seo_settings')
-          .insert([data]);
+          .insert([data])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+
+        console.log('Insert result:', result);
       }
 
       toast({
@@ -95,12 +108,12 @@ const SEOManager = () => {
         description: "SEO settings updated successfully",
       });
       
-      fetchSEOSettings();
+      await fetchSEOSettings();
     } catch (error) {
       console.error('Error saving SEO settings:', error);
       toast({
         title: "Error",
-        description: "Failed to save SEO settings",
+        description: `Failed to save SEO settings: ${error.message || error}`,
         variant: "destructive",
       });
     } finally {

@@ -24,6 +24,15 @@ const News = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: ""
+  });
+  const [sendingMessage, setSendingMessage] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -76,6 +85,190 @@ const News = () => {
     if (content.length <= length) return content;
     return content.substring(0, length) + "...";
   };
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubscribing(true);
+    try {
+      console.log('Attempting to subscribe email:', email);
+      
+      // Insert directly into database
+      const { data: dbData, error: dbError } = await supabase
+        .from('member_subscriptions')
+        .insert([{
+          email: email,
+          is_subscribed: true,
+          subscribed_at: new Date().toISOString()
+        }])
+        .select();
+
+      if (dbError) {
+        console.error('Database insert failed:', dbError);
+        toast({
+          title: "Error",
+          description: "Failed to subscribe. Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Successfully added to database:', dbData);
+      toast({
+        title: "Success!",
+        description: "Thank you for subscribing to our newsletter!",
+      });
+      setEmail("");
+    } catch (error) {
+      console.error('Error subscribing:', error);
+      
+      // Fallback: Store locally only
+      try {
+        const subscriptions = JSON.parse(localStorage.getItem('newsletter_subscriptions') || '[]');
+        const existingSubscription = subscriptions.find((sub: any) => sub.email === email);
+        
+        if (!existingSubscription) {
+          const newSubscription = {
+            email: email,
+            is_subscribed: true,
+            subscribed_at: new Date().toISOString()
+          };
+          subscriptions.push(newSubscription);
+          localStorage.setItem('newsletter_subscriptions', JSON.stringify(subscriptions));
+          
+          toast({
+            title: "Success!",
+            description: "Thank you for subscribing to our newsletter! (Stored locally)",
+          });
+          setEmail("");
+        } else {
+          toast({
+            title: "Already Subscribed",
+            description: "This email is already subscribed to our newsletter",
+            variant: "destructive",
+          });
+        }
+      } catch (localError) {
+        console.error('Local storage error:', localError);
+        toast({
+          title: "Error",
+          description: "Failed to subscribe. Please try again later.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!contactForm.email.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      console.log('Processing contact form submission:', contactForm);
+      
+      // Store contact form submission in database
+      const { data: dbData, error: dbError } = await supabase
+        .from('member_subscriptions')
+        .insert([{
+          email: contactForm.email,
+          is_subscribed: false, // Mark as not subscribed since this is a contact form
+          subscribed_at: new Date().toISOString(),
+          metadata: {
+            type: 'contact_form',
+            name: contactForm.name,
+            subject: contactForm.subject || 'Contact Form Submission',
+            message: contactForm.message
+          }
+        }])
+        .select();
+
+      if (dbError) {
+        console.error('Database insert failed:', dbError);
+        toast({
+          title: "Error",
+          description: "Failed to send message. Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Successfully stored in database:', dbData);
+
+      // Log the contact form submission for debugging
+      console.log('Contact form submission:', {
+        to: 'izunair38@gmail.com',
+        from: contactForm.email,
+        subject: contactForm.subject || 'Contact Form Submission',
+        message: contactForm.message,
+        name: contactForm.name,
+        timestamp: new Date().toISOString()
+      });
+
+      // Show success message
+      toast({
+        title: "Message Sent Successfully!",
+        description: "Your message has been sent and will be reviewed by our team. We'll get back to you soon!",
+      });
+      
+      // Clear the form
+      setContactForm({
+        name: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+
+    } catch (error) {
+      console.error('Error sending email:', error);
+      
+      // Fallback: Store message locally and show instructions
+      const contactMessages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+      contactMessages.push({
+        ...contactForm,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('contact_messages', JSON.stringify(contactMessages));
+      
+      toast({
+        title: "Message Saved",
+        description: "Your message has been saved. Please contact us directly at izunair38@gmail.com",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+
 
   if (loading) {
     return (
@@ -248,19 +441,119 @@ const News = () => {
               Subscribe to our newsletter to get the latest news, special offers, and updates 
               delivered straight to your inbox.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
               <input 
                 type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
                 className="flex-1 px-4 py-3 rounded-lg border border-thai-gold/20 bg-white/10 text-thai-beige-light placeholder:text-thai-beige-dark focus:outline-none focus:ring-2 focus:ring-thai-gold"
+                required
               />
-              <Button variant="hero" size="lg">
-                Subscribe
+              <Button 
+                type="submit"
+                variant="hero" 
+                size="lg"
+                disabled={subscribing}
+              >
+                {subscribing ? "Subscribing..." : "Subscribe"}
               </Button>
-            </div>
+            </form>
             <p className="text-sm text-thai-beige-dark mt-4">
               We respect your privacy. Unsubscribe at any time.
             </p>
+            
+
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Form */}
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center mb-12">
+            <h2 className="font-playfair text-4xl font-bold text-foreground mb-4">
+              Get in Touch
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Have a question or want to share feedback? We'd love to hear from you!
+            </p>
+          </div>
+
+          <div className="max-w-2xl mx-auto">
+            <form onSubmit={handleContactSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    value={contactForm.name}
+                    onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                    className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="contact-email" className="block text-sm font-medium text-foreground mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="contact-email"
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                    className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  id="subject"
+                  value={contactForm.subject}
+                  onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
+                  className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"
+                  placeholder="What's this about?"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+                  Message *
+                </label>
+                <textarea
+                  id="message"
+                  value={contactForm.message}
+                  onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                  rows={6}
+                  className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold resize-none"
+                  placeholder="Tell us what's on your mind..."
+                  required
+                />
+              </div>
+
+              <div className="text-center">
+                <Button
+                  type="submit"
+                  variant="hero"
+                  size="lg"
+                  disabled={sendingMessage}
+                  className="px-8"
+                >
+                  {sendingMessage ? "Sending..." : "Send Message"}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       </section>
