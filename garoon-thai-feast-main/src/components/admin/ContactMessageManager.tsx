@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Trash2, Eye, CheckCircle } from "lucide-react";
+import { Mail, Trash2, Eye, CheckCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface ContactMessage {
   name: string;
@@ -16,137 +17,174 @@ interface ContactMessage {
   status: string;
 }
 
+// Define a local type for Supabase message rows
+interface SupabaseMessage {
+  email: string;
+  subscribed_at: string;
+  is_subscribed?: boolean;
+  metadata?: {
+    name?: string;
+    subject?: string;
+    message?: string;
+    type?: string;
+    status?: string;
+  };
+}
+
 const ContactMessageManager = () => {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<ContactMessage | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadMessages();
-  }, []);
+  const handleError = useCallback((error: unknown, defaultMessage: string) => {
+    console.error(error);
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : defaultMessage,
+      variant: "destructive",
+    });
+  }, [toast]);
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
+    setIsLoading(true);
     try {
-      // Load contact form submissions from database
       const { data: dbMessages, error: dbError } = await supabase
         .from('member_subscriptions')
         .select('*')
         .eq('is_subscribed', false)
-        .not('metadata', 'is', null)
+        .eq('metadata->>type', 'contact_form')
         .order('subscribed_at', { ascending: false });
 
       if (dbError) {
-        console.error('Database fetch failed:', dbError);
-        toast({
-          title: "Error",
-          description: "Failed to load contact messages",
-          variant: "destructive",
-        });
+        handleError(dbError, "Failed to load contact messages");
         setMessages([]);
-      } else {
-        console.log('Database contact messages:', dbMessages);
-        
-        // Convert database messages to contact message format
-        const dbContactMessages = (dbMessages || []).map((dbMsg: any) => ({
-          name: dbMsg.metadata?.name || 'Unknown',
-          email: dbMsg.email,
-          subject: dbMsg.metadata?.subject || 'Contact Form Submission',
-          message: dbMsg.metadata?.message || '',
-          timestamp: dbMsg.subscribed_at,
-          status: 'pending'
-        }));
-        
-        setMessages(dbContactMessages);
+        return;
       }
+
+      if (!dbMessages) {
+        setMessages([]);
+        return;
+      }
+
+      // Use SupabaseMessage type instead of any
+      const sanitizedMessages = (dbMessages as SupabaseMessage[]).map((dbMsg) => ({
+        name: sanitizeInput(dbMsg.metadata?.name) || 'Unknown',
+        email: sanitizeInput(dbMsg.email),
+        subject: sanitizeInput(dbMsg.metadata?.subject) || 'Contact Form Submission',
+        message: sanitizeInput(dbMsg.metadata?.message) || '',
+        timestamp: dbMsg.subscribed_at,
+        status: dbMsg.metadata?.status || 'pending'
+      }));
+      setMessages(sanitizedMessages);
     } catch (error) {
-      console.error('Error loading messages:', error);
-      setMessages([]);
+      handleError(error, "Failed to load contact messages");
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [handleError]);
+
+  useEffect(() => {
+    loadMessages();
+  }, [loadMessages]);
 
   const deleteMessage = async (message: ContactMessage) => {
+    setIsLoading(true);
     try {
-      // Delete from database
+      if (!message.email || !message.timestamp) {
+        handleError(new Error("Invalid message data"), "Failed to delete message");
+        return;
+      }
       const { error: dbError } = await supabase
         .from('member_subscriptions')
         .delete()
         .eq('email', message.email)
-        .eq('metadata->>type', 'contact_form');
-
+        .eq('metadata->>type', 'contact_form')
+        .eq('subscribed_at', message.timestamp);
       if (dbError) {
-        console.error('Database delete failed:', dbError);
-        toast({
-          title: "Error",
-          description: "Failed to delete message from database",
-          variant: "destructive",
-        });
+        handleError(dbError, "Failed to delete message");
         return;
       }
-
-      // Update local state
-      const updatedMessages = messages.filter(msg => 
+      setMessages(messages.filter(msg =>
         msg.email !== message.email || msg.timestamp !== message.timestamp
-      );
-      setMessages(updatedMessages);
-      
+      ));
       toast({
-        title: "Message Deleted",
-        description: "Contact message has been deleted successfully",
+        title: "Success",
+        description: "Message deleted successfully",
       });
     } catch (error) {
-      console.error('Error deleting message:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete message",
-        variant: "destructive",
-      });
+      handleError(error, "Failed to delete message");
+    } finally {
+      setIsLoading(false);
+      setMessageToDelete(null);
     }
   };
 
   const markAsRead = async (message: ContactMessage) => {
-    try {
-      // Update status in database (we'll add a status field to metadata)
-      const { error: dbError } = await supabase
-        .from('member_subscriptions')
-        .update({
-          metadata: {
-            ...message,
-            status: 'read'
-          }
-        })
-        .eq('email', message.email)
-        .eq('metadata->>type', 'contact_form');
+    setIsLoading(true);
 
-      if (dbError) {
-        console.error('Database update failed:', dbError);
-        toast({
-          title: "Error",
-          description: "Failed to update message status",
-          variant: "destructive",
-        });
+    try {
+      if (!message.email || !message.timestamp) {
+        handleError(new Error("Invalid message data"), "Failed to mark as read");
         return;
       }
+      // First, fetch the existing record to preserve metadata
+      const { data: rawRecord, error: fetchError } = await supabase
+        .from('member_subscriptions')
+        .select('metadata')
+        .eq('email', message.email)
+        .eq('metadata->>type', 'contact_form')
+        .eq('subscribed_at', message.timestamp)
+        .single();
+      if (fetchError) {
+        handleError(fetchError, "Failed to fetch message record");
+        return;
+      }
+      // TypeScript workaround: metadata is not in the schema, so we cast to any
+      const existingRecord = rawRecord as { metadata?: Record<string, unknown> } | null;
+      if (!existingRecord || !existingRecord.metadata || typeof existingRecord.metadata !== 'object') {
+        handleError(new Error("Message not found or missing metadata"), "Failed to mark as read");
+        return;
+      }
+      // Update the record while preserving existing metadata
+      const updatedMetadata: Record<string, unknown> = {
+        ...existingRecord.metadata,
+        status: 'read'
+      };
+      // TypeScript workaround: metadata is not in the schema, so we cast the update object to Record<string, unknown>
 
+      const { error: updateError } = await supabase
+        .from('member_subscriptions')
+        .update({ metadata: updatedMetadata } as Record<string, unknown>)
+        .eq('email', message.email)
+        .eq('metadata->>type', 'contact_form')
+        .eq('subscribed_at', message.timestamp);
+      if (updateError) {
+        handleError(updateError, "Failed to update message status");
+        return;
+      }
       // Update local state
-      const updatedMessages = messages.map(msg => 
+      setMessages(messages.map(msg =>
         msg.email === message.email && msg.timestamp === message.timestamp
           ? { ...msg, status: 'read' }
           : msg
-      );
-      setMessages(updatedMessages);
-      
+      ));
       toast({
-        title: "Message Marked as Read",
-        description: "Message status updated successfully",
+        title: "Success",
+        description: "Message marked as read",
       });
     } catch (error) {
-      console.error('Error updating message:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update message status",
-        variant: "destructive",
-      });
+      handleError(error, "Failed to mark as read");
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+
+  const sanitizeInput = (input: string | undefined): string => {
+    if (!input) return '';
+    return input.replace(/[<>]/g, '').trim();
   };
 
   const formatDate = (timestamp: string) => {
@@ -205,7 +243,11 @@ const ContactMessageManager = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {messages.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : messages.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No contact messages found.
             </div>
@@ -254,8 +296,9 @@ const ContactMessageManager = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteMessage(message)}
-                        className="text-destructive hover:text-destructive"
+                        onClick={() => setMessageToDelete(message)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={isLoading}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -269,10 +312,39 @@ const ContactMessageManager = () => {
         </CardContent>
       </Card>
 
-      {/* Message Detail Modal */}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!messageToDelete} onOpenChange={() => setMessageToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the message.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => messageToDelete && deleteMessage(messageToDelete)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Message Detail Modal with improved accessibility */}
       {selectedMessage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="message-detail-title"
+        >
+          <div 
+            className="bg-background p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-semibold">Message Details</h3>
               <Button
