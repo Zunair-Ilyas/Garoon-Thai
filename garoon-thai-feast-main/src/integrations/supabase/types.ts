@@ -150,7 +150,6 @@ export type Database = {
         Row: {
           category_id: string | null
           created_at: string
-          delivery_link: string | null
           description: string | null
           id: string
           image_url: string | null
@@ -159,14 +158,14 @@ export type Database = {
           meta_keywords: string | null
           meta_title: string | null
           name: string
-          pickup_link: string | null
           price: number
           updated_at: string
+          is_gluten_free: boolean | null
+          is_vegan: boolean | null
         }
         Insert: {
           category_id?: string | null
           created_at?: string
-          delivery_link?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -175,14 +174,14 @@ export type Database = {
           meta_keywords?: string | null
           meta_title?: string | null
           name: string
-          pickup_link?: string | null
           price: number
           updated_at?: string
+          is_gluten_free?: boolean | null
+          is_vegan?: boolean | null
         }
         Update: {
           category_id?: string | null
           created_at?: string
-          delivery_link?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -191,9 +190,10 @@ export type Database = {
           meta_keywords?: string | null
           meta_title?: string | null
           name?: string
-          pickup_link?: string | null
           price?: number
           updated_at?: string
+          is_gluten_free?: boolean | null
+          is_vegan?: boolean | null
         }
         Relationships: [
           {

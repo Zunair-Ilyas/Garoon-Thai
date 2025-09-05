@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,12 +22,12 @@ const menuItemSchema = z.object({
   price: z.string().min(1, "Price is required"),
   category_id: z.string().optional(),
   image_url: z.string().optional(),
-  delivery_link: z.string().optional(),
-  pickup_link: z.string().optional(),
   meta_title: z.string().optional(),
   meta_description: z.string().optional(),
   meta_keywords: z.string().optional(),
-  is_active: z.boolean()
+  is_active: z.boolean(),
+  is_gluten_free: z.boolean().optional(),
+  is_vegan: z.boolean().optional(),
 });
 
 type MenuItemFormData = z.infer<typeof menuItemSchema>;
@@ -39,12 +39,12 @@ interface MenuItem {
   price: number;
   category_id?: string;
   image_url?: string;
-  delivery_link?: string;
-  pickup_link?: string;
   meta_title?: string;
   meta_description?: string;
   meta_keywords?: string;
   is_active: boolean;
+  is_gluten_free?: boolean;
+  is_vegan?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -57,115 +57,166 @@ interface Category {
   is_active: boolean;
 }
 
-const MenuManager = () => {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<MenuItemFormData>({
-    resolver: zodResolver(menuItemSchema),
-    defaultValues: {
-      is_active: true
-    }
-  });
-
-  const isActive = watch("is_active");
-
-  useEffect(() => {
-    fetchMenuItems();
-    fetchCategories();
-  }, []);
-
-  const fetchMenuItems = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('menu_items')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setMenuItems(data || []);
-    } catch (error) {
+const fetchMenuItems = async (setMenuItems, toast) => {
+  try {
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('*')
+      .order('name');
+    if (error) {
       console.error('Error fetching menu items:', error);
       toast({
         title: "Error",
         description: "Failed to fetch menu items",
         variant: "destructive",
       });
+      return;
+    }
+    setMenuItems(data || []);
+  } catch (error) {
+    console.error('Error fetching menu items:', error);
+    toast({
+      title: "Error",
+      description: "Failed to fetch menu items",
+      variant: "destructive",
+    });
+  }
+};
+
+const fetchCategories = async (setCategories, toast) => {
+  try {
+    const { data, error } = await supabase
+      .from('menu_categories')
+      .select('*')
+      .order('display_order');
+    if (error) {
+      console.error('Error fetching categories:', error);
+      return;
+    }
+    setCategories(data || []);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+  }
+};
+
+const MenuManager = () => {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<MenuItemFormData>({
+    resolver: zodResolver(menuItemSchema),
+    defaultValues: {
+      is_active: true,
+      is_gluten_free: false,
+      is_vegan: false
+    }
+  });
+
+  const isActive = watch("is_active");
+
+  useEffect(() => {
+    fetchMenuItems(setMenuItems, toast);
+    fetchCategories(setCategories, toast);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImageFile(null);
+      setImagePreview(null);
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('menu_categories')
-        .select('*')
-        .order('display_order');
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
+  const getBase64FromFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const onSubmit = async (data: MenuItemFormData) => {
-    console.log('Submitting menu item data:', data);
+    console.log('onSubmit called', data); // DEBUG
     setLoading(true);
     try {
+      let imageBase64 = data.image_url;
+      if (imageFile) {
+        imageBase64 = await getBase64FromFile(imageFile);
+      }
       const menuItemData = {
         ...data,
+        image_url: imageBase64,
         price: parseFloat(data.price),
         category_id: data.category_id || null,
-        is_active: data.is_active ?? true
+        is_active: data.is_active ?? true,
+        is_gluten_free: data.is_gluten_free ?? false,
+        is_vegan: data.is_vegan ?? false
       };
-
-      console.log('Processed menu item data:', menuItemData);
-
       if (editingItem) {
-        const { data: result, error } = await supabase
+        const { error } = await supabase
           .from('menu_items')
           .update(menuItemData)
           .eq('id', editingItem.id)
           .select();
-
         if (error) {
           console.error('Update error:', error);
-          throw error;
+          toast({
+            title: "Error",
+            description: `Failed to update menu item: ${error.message || error}`,
+            variant: "destructive",
+          });
+          return;
         }
-
-        console.log('Update result:', result);
         toast({
           title: "Success",
           description: "Menu item updated successfully",
         });
       } else {
-        const { data: result, error } = await supabase
+        const { error } = await supabase
           .from('menu_items')
           .insert([menuItemData])
           .select();
-
         if (error) {
           console.error('Insert error:', error);
-          throw error;
+          toast({
+            title: "Error",
+            description: `Failed to create menu item: ${error.message || error}`,
+            variant: "destructive",
+          });
+          return;
         }
-
-        console.log('Insert result:', result);
         toast({
           title: "Success",
           description: "Menu item created successfully",
         });
       }
-
       setIsDialogOpen(false);
       setEditingItem(null);
       reset({
-        is_active: true
+        is_active: true,
+        is_gluten_free: false,
+        is_vegan: false
       });
-      await fetchMenuItems();
+      setImageFile(null);
+      setImagePreview(null);
+      await fetchMenuItems(setMenuItems, toast);
     } catch (error) {
       console.error('Error saving menu item:', error);
       toast({
@@ -185,12 +236,14 @@ const MenuManager = () => {
     setValue("price", item.price.toString());
     setValue("category_id", item.category_id || "");
     setValue("image_url", item.image_url || "");
-    setValue("delivery_link", item.delivery_link || "");
-    setValue("pickup_link", item.pickup_link || "");
     setValue("meta_title", item.meta_title || "");
     setValue("meta_description", item.meta_description || "");
     setValue("meta_keywords", item.meta_keywords || "");
     setValue("is_active", item.is_active);
+    setValue("is_gluten_free", item.is_gluten_free ?? false);
+    setValue("is_vegan", item.is_vegan ?? false);
+    setImageFile(null);
+    setImagePreview(item.image_url || null);
     setIsDialogOpen(true);
   };
 
@@ -201,14 +254,20 @@ const MenuManager = () => {
           .from('menu_items')
           .delete()
           .eq('id', id);
-
-        if (error) throw error;
-
+        if (error) {
+          console.error('Error deleting menu item:', error);
+          toast({
+            title: "Error",
+            description: "Failed to delete menu item",
+            variant: "destructive",
+          });
+          return;
+        }
         toast({
           title: "Success",
           description: "Menu item deleted successfully",
         });
-        fetchMenuItems();
+        fetchMenuItems(setMenuItems, toast);
       } catch (error) {
         console.error('Error deleting menu item:', error);
         toast({
@@ -221,20 +280,23 @@ const MenuManager = () => {
   };
 
   const handleNewItem = () => {
+    console.log('handleNewItem called'); // DEBUG
     setEditingItem(null);
     reset({
       is_active: true,
+      is_gluten_free: false,
+      is_vegan: false,
       name: "",
       description: "",
       price: "",
       category_id: "",
       image_url: "",
-      delivery_link: "",
-      pickup_link: "",
       meta_title: "",
       meta_description: "",
       meta_keywords: ""
     });
+    setImageFile(null);
+    setImagePreview(null);
     setIsDialogOpen(true);
   };
 
@@ -303,14 +365,14 @@ const MenuManager = () => {
                 <div>
                   <Label htmlFor="category_id">Category</Label>
                   <Select 
-                    value={watch("category_id") || ""} 
-                    onValueChange={(value) => setValue("category_id", value)}
+                    value={watch("category_id") || "none"}
+                    onValueChange={(value) => setValue("category_id", value === "none" ? undefined : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No category</SelectItem>
+                      <SelectItem value="none">No category</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
@@ -319,34 +381,37 @@ const MenuManager = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div>
-                  <Label htmlFor="image_url">Image URL</Label>
-                  <Input 
-                    id="image_url" 
-                    {...register("image_url")} 
-                    placeholder="https://example.com/image.jpg"
+                  <Label htmlFor="image_file">Image Upload</Label>
+                  <Input
+                    id="image_file"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
                   />
+                  {imagePreview && (
+                    <img src={imagePreview} alt="Preview" className="mt-2 max-h-32 rounded" />
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="delivery_link">Delivery Link</Label>
-                  <Input 
-                    id="delivery_link" 
-                    {...register("delivery_link")} 
-                    placeholder="Uber Eats link"
+              {/* Gluten Free & Vegan Switches */}
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_gluten_free"
+                    checked={watch("is_gluten_free")}
+                    onCheckedChange={(checked) => setValue("is_gluten_free", checked)}
                   />
+                  <Label htmlFor="is_gluten_free">Gluten Free</Label>
                 </div>
-
-                <div>
-                  <Label htmlFor="pickup_link">Pickup Link</Label>
-                  <Input 
-                    id="pickup_link" 
-                    {...register("pickup_link")} 
-                    placeholder="Online ordering link"
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_vegan"
+                    checked={watch("is_vegan")}
+                    onCheckedChange={(checked) => setValue("is_vegan", checked)}
                   />
+                  <Label htmlFor="is_vegan">Vegan</Label>
                 </div>
               </div>
 
@@ -416,6 +481,8 @@ const MenuManager = () => {
                 <TableHead>Price</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Gluten Free</TableHead>
+                <TableHead>Vegan</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -441,6 +508,12 @@ const MenuManager = () => {
                       {item.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                       {item.is_active ? "Active" : "Hidden"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {item.is_gluten_free ? <Badge variant="outline">GF</Badge> : null}
+                  </TableCell>
+                  <TableCell>
+                    {item.is_vegan ? <Badge variant="outline">Vegan</Badge> : null}
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">

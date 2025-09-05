@@ -1,16 +1,26 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, LucideFacebook, LucideInstagram, LucideTwitter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+interface BusinessHours {
+  [day: string]: string;
+}
+
+interface SocialLinks {
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+}
 
 interface ContactInfo {
   id: string;
   address: string | null;
   phone: string | null;
   email: string | null;
-  business_hours: any;
-  social_links: any;
+  business_hours: BusinessHours;
+  social_links: SocialLinks;
   maps_link: string | null;
 }
 
@@ -21,79 +31,56 @@ const Footer = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchContactInfo();
-  }, []);
+    const fetchContactInfo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('contact_info')
+          .select('*')
+          .maybeSingle();
 
-  const fetchContactInfo = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('contact_info')
-        .select('*')
-        .maybeSingle();
-
-      if (error) {
+        if (error || !data) {
+          console.error('Error fetching contact info:', error);
+          setContactInfo(null);
+          toast({
+            title: "Contact Info Unavailable",
+            description: "Unable to load contact or business hours information from the database.",
+            variant: "destructive",
+          });
+        } else {
+          // Parse business_hours and social_links if they are strings (JSON) or null
+          const parsedData = { ...data };
+          // Ensure business_hours is always an object
+          if (!parsedData.business_hours || typeof parsedData.business_hours === 'string') {
+            try {
+              parsedData.business_hours = parsedData.business_hours ? JSON.parse(parsedData.business_hours) : {};
+            } catch {
+              parsedData.business_hours = {};
+            }
+          }
+          // Ensure social_links is always an object
+          if (!parsedData.social_links || typeof parsedData.social_links === 'string') {
+            try {
+              parsedData.social_links = parsedData.social_links ? JSON.parse(parsedData.social_links) : {};
+            } catch {
+              parsedData.social_links = {};
+            }
+          }
+          setContactInfo(parsedData as ContactInfo);
+        }
+      } catch (error) {
         console.error('Error fetching contact info:', error);
-        // Use default values if database fetch fails
-        setContactInfo({
-          id: 'default',
-          address: "123 Thai Street, Flavor District\nFood City, FC 12345",
-          phone: "(555) 123-4567",
-          email: "hello@garoonthai.com",
-          business_hours: {
-            "Mon - Thu": "11:00 AM - 10:00 PM",
-            "Fri - Sat": "11:00 AM - 11:00 PM",
-            "Sunday": "12:00 PM - 9:00 PM"
-          },
-          social_links: {
-            facebook: "#",
-            instagram: "#",
-            twitter: "#"
-          },
-          maps_link: null
+        setContactInfo(null);
+        toast({
+          title: "Contact Info Unavailable",
+          description: "Unable to load contact or business hours information from the database.",
+          variant: "destructive",
         });
-      } else {
-        setContactInfo(data || {
-          id: 'default',
-          address: "123 Thai Street, Flavor District\nFood City, FC 12345",
-          phone: "(555) 123-4567",
-          email: "hello@garoonthai.com",
-          business_hours: {
-            "Mon - Thu": "11:00 AM - 10:00 PM",
-            "Fri - Sat": "11:00 AM - 11:00 PM",
-            "Sunday": "12:00 PM - 9:00 PM"
-          },
-          social_links: {
-            facebook: "#",
-            instagram: "#",
-            twitter: "#"
-          },
-          maps_link: null
-        });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching contact info:', error);
-      // Use default values on error
-      setContactInfo({
-        id: 'default',
-        address: "123 Thai Street, Flavor District\nFood City, FC 12345",
-        phone: "(555) 123-4567",
-        email: "hello@garoonthai.com",
-        business_hours: {
-          "Mon - Thu": "11:00 AM - 10:00 PM",
-          "Fri - Sat": "11:00 AM - 11:00 PM",
-          "Sunday": "12:00 PM - 9:00 PM"
-        },
-        social_links: {
-          facebook: "#",
-          instagram: "#",
-          twitter: "#"
-        },
-        maps_link: null
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchContactInfo();
+  }, [toast]);
 
   if (loading) {
     return (
@@ -119,7 +106,7 @@ const Footer = () => {
                 <span className="text-thai-charcoal font-bold text-sm">G</span>
               </div>
               <span className="font-playfair text-xl font-bold text-thai-gold">
-                Garoon Thai
+                Easy Go Thai
               </span>
             </div>
             <p className="text-sm text-thai-beige-dark leading-relaxed">
@@ -127,29 +114,32 @@ const Footer = () => {
               the vibrant flavors of Thailand in every dish.
             </p>
             <div className="flex space-x-4">
-              <a 
-                href={contactInfo?.social_links?.facebook || "#"} 
+              <a
+                href={contactInfo?.social_links?.facebook || undefined}
                 className="text-thai-beige-dark hover:text-thai-gold transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-disabled={!contactInfo?.social_links?.facebook}
               >
-                <Facebook className="h-5 w-5" />
+                <LucideFacebook className="h-5 w-5" />
               </a>
-              <a 
-                href={contactInfo?.social_links?.instagram || "#"} 
+              <a
+                href={contactInfo?.social_links?.instagram || undefined}
                 className="text-thai-beige-dark hover:text-thai-gold transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-disabled={!contactInfo?.social_links?.instagram}
               >
-                <Instagram className="h-5 w-5" />
+                <LucideInstagram className="h-5 w-5" />
               </a>
-              <a 
-                href={contactInfo?.social_links?.twitter || "#"} 
+              <a
+                href={contactInfo?.social_links?.twitter || undefined}
                 className="text-thai-beige-dark hover:text-thai-gold transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-disabled={!contactInfo?.social_links?.twitter}
               >
-                <Twitter className="h-5 w-5" />
+                <LucideTwitter className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -191,29 +181,28 @@ const Footer = () => {
                       </span>
                     ))
                   ) : (
-                    <>
-                      123 Thai Street, Flavor District<br />
-                      Food City, FC 12345
-                    </>
+                    <span className="italic text-thai-beige-dark/60">Not available</span>
                   )}
                 </span>
               </li>
               <li className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-thai-gold flex-shrink-0" />
-                <a 
-                  href={`tel:${contactInfo?.phone || "(555) 123-4567"}`}
+                <a
+                  href={contactInfo?.phone ? `tel:${contactInfo.phone}` : undefined}
                   className="text-sm text-thai-beige-dark hover:text-thai-gold transition-colors"
+                  aria-disabled={!contactInfo?.phone}
                 >
-                  {contactInfo?.phone || "(555) 123-4567"}
+                  {contactInfo?.phone || <span className="italic text-thai-beige-dark/60">Not available</span>}
                 </a>
               </li>
               <li className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 text-thai-gold flex-shrink-0" />
-                <a 
-                  href={`mailto:${contactInfo?.email || "hello@garoonthai.com"}`}
+                <a
+                  href={contactInfo?.email ? `mailto:${contactInfo.email}` : undefined}
                   className="text-sm text-thai-beige-dark hover:text-thai-gold transition-colors"
+                  aria-disabled={!contactInfo?.email}
                 >
-                  {contactInfo?.email || "hello@garoonthai.com"}
+                  {contactInfo?.email || <span className="italic text-thai-beige-dark/60">Not available</span>}
                 </a>
               </li>
             </ul>
@@ -223,7 +212,7 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="font-semibold text-thai-gold">Business Hours</h3>
             <div className="space-y-2">
-              {contactInfo?.business_hours ? (
+              {contactInfo?.business_hours && Object.keys(contactInfo.business_hours).length > 0 ? (
                 Object.entries(contactInfo.business_hours).map(([day, hours], index) => (
                   <div key={day} className={index === 0 ? "flex items-start space-x-3" : "text-sm text-thai-beige-dark ml-7"}>
                     {index === 0 && <Clock className="h-4 w-4 mt-1 text-thai-gold flex-shrink-0" />}
@@ -234,23 +223,7 @@ const Footer = () => {
                   </div>
                 ))
               ) : (
-                <>
-                  <div className="flex items-start space-x-3">
-                    <Clock className="h-4 w-4 mt-1 text-thai-gold flex-shrink-0" />
-                    <div className="text-sm text-thai-beige-dark">
-                      <div className="font-medium">Mon - Thu</div>
-                      <div>11:00 AM - 10:00 PM</div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-thai-beige-dark ml-7">
-                    <div className="font-medium">Fri - Sat</div>
-                    <div>11:00 AM - 11:00 PM</div>
-                  </div>
-                  <div className="text-sm text-thai-beige-dark ml-7">
-                    <div className="font-medium">Sunday</div>
-                    <div>12:00 PM - 9:00 PM</div>
-                  </div>
-                </>
+                <span className="italic text-thai-beige-dark/60">Not available</span>
               )}
             </div>
           </div>
@@ -259,7 +232,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-thai-beige-dark/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-thai-beige-dark">
-            © {currentYear} Garoon Thai. All rights reserved.
+            © {currentYear} Easy Go Thai. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="#" className="text-sm text-thai-beige-dark hover:text-thai-gold transition-colors">

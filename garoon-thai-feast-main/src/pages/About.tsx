@@ -7,6 +7,9 @@ import Layout from "@/components/Layout";
 import { MapPin, Phone, Mail, Clock, Users, Award, Heart, Utensils } from "lucide-react";
 import chefPortrait from "../assets/Chef.jpg";
 import restaurantInterior from "@/assets/restaurant-interior.jpg";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const About = () => {
   const values = [
@@ -60,13 +63,117 @@ const About = () => {
     }
   ];
 
+  // Contact Info State
+  const [contactInfo, setContactInfo] = useState({
+    address: null,
+    phone: null,
+    email: null,
+    business_hours: {},
+  });
+  const [loadingContactInfo, setLoadingContactInfo] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('contact_info')
+          .select('*')
+          .maybeSingle();
+        if (error || !data) {
+          setContactInfo({ address: null, phone: null, email: null, business_hours: {} });
+        } else {
+          const parsed = { ...data };
+          if (typeof parsed.business_hours === 'string') {
+            try { parsed.business_hours = JSON.parse(parsed.business_hours); } catch { parsed.business_hours = {}; }
+          }
+          setContactInfo({
+            address: parsed.address,
+            phone: parsed.phone,
+            email: parsed.email,
+            business_hours: parsed.business_hours || {},
+          });
+        }
+      } catch {
+        setContactInfo({ address: null, phone: null, email: null, business_hours: {} });
+      } finally {
+        setLoadingContactInfo(false);
+      }
+    };
+    fetchContactInfo();
+  }, []);
+
+  // Contact Form State (like News page)
+  const [contactForm, setContactForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    subject: "",
+    message: ""
+  });
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = `${contactForm.firstName} ${contactForm.lastName}`.trim();
+    if (!name || !contactForm.email || !contactForm.message) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!contactForm.email.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSendingMessage(true);
+    try {
+      const { error: dbError } = await supabase
+        .from('contact_messages')
+        .insert([
+          {
+            name,
+            email: contactForm.email,
+            message: contactForm.message
+          }
+        ]);
+      if (dbError) {
+        toast({
+          title: "Error",
+          description: "Failed to send message. Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Message Sent Successfully!",
+        description: "Your message has been sent and will be reviewed by our team. We'll get back to you soon!",
+      });
+      setContactForm({ firstName: "", lastName: "", email: "", subject: "", message: "" });
+    } catch {
+      toast({
+        title: "Message Saved",
+        description: "Your message has been saved locally. Please contact us directly if urgent.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   return (
     <Layout>
       {/* Hero Section */}
       <section className="py-20 bg-hero-gradient">
         <div className="container mx-auto px-4 text-center">
           <h1 className="font-playfair text-5xl md:text-6xl font-bold text-thai-charcoal mb-4">
-            About Garoon Thai
+            About Easy Go Thai
           </h1>
           <p className="text-xl text-thai-charcoal/80 max-w-2xl mx-auto">
             A journey of 25 years bringing authentic Thai flavors to your table
@@ -83,7 +190,6 @@ const About = () => {
                 Our <span className="text-thai-gold">Journey</span>
               </h2>
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                Since 2018 Mai (service) and Gong (kitchen) have been the main-stay of EasyGo Thai.
                 In February 2023 they bought EasyGo Thai and started working on refreshing and improving
                 every aspect of the restaurant
               </p>
@@ -220,84 +326,76 @@ const About = () => {
               <h2 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-8">
                 Get in <span className="text-thai-gold">Touch</span>
               </h2>
-              
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
                   <MapPin className="h-6 w-6 text-thai-gold mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Location</h3>
                     <p className="text-muted-foreground">
-                      123 Thai Street, Flavor District<br />
-                      Food City, FC 12345
+                      {loadingContactInfo ? "Loading..." : contactInfo.address ? contactInfo.address.split('\n').map((line, i) => <span key={i}>{line}<br/></span>) : <span className="italic">Not available</span>}
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <Phone className="h-6 w-6 text-thai-gold mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Phone</h3>
-                    <p className="text-muted-foreground">(555) 123-4567</p>
+                    <p className="text-muted-foreground">{loadingContactInfo ? "Loading..." : contactInfo.phone || <span className="italic">Not available</span>}</p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <Mail className="h-6 w-6 text-thai-gold mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Email</h3>
-                    <p className="text-muted-foreground">hello@garoonthai.com</p>
+                    <p className="text-muted-foreground">{loadingContactInfo ? "Loading..." : contactInfo.email || <span className="italic">Not available</span>}</p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <Clock className="h-6 w-6 text-thai-gold mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Hours</h3>
                     <div className="text-muted-foreground">
-                      <p>Monday - Thursday: 11:00 AM - 10:00 PM</p>
-                      <p>Friday - Saturday: 11:00 AM - 11:00 PM</p>
-                      <p>Sunday: 12:00 PM - 9:00 PM</p>
+                      {loadingContactInfo ? "Loading..." : Object.keys(contactInfo.business_hours).length > 0 ? (
+                        Object.entries(contactInfo.business_hours).map(([day, hours]) => (
+                          <p key={day}>{day}: {String(hours)}</p>
+                        ))
+                      ) : <span className="italic">Not available</span>}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-
             {/* Contact Form */}
             <Card className="card-elegant border-thai-gold/20 animate-scale-in">
               <CardContent className="p-8">
                 <h3 className="font-playfair text-2xl font-semibold text-foreground mb-6">
                   Send us a Message
                 </h3>
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleContactSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="first-name">First Name</Label>
-                      <Input id="first-name" placeholder="Your first name" />
+                      <Input id="first-name" placeholder="Your first name" value={contactForm.firstName} onChange={e => setContactForm(f => ({ ...f, firstName: e.target.value }))} />
                     </div>
                     <div>
                       <Label htmlFor="last-name">Last Name</Label>
-                      <Input id="last-name" placeholder="Your last name" />
+                      <Input id="last-name" placeholder="Your last name" value={contactForm.lastName} onChange={e => setContactForm(f => ({ ...f, lastName: e.target.value }))} />
                     </div>
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="your.email@example.com" />
+                    <Input id="email" type="email" placeholder="your.email@example.com" value={contactForm.email} onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))} />
                   </div>
                   <div>
                     <Label htmlFor="subject">Subject</Label>
-                    <Input id="subject" placeholder="What's this about?" />
+                    <Input id="subject" placeholder="What's this about?" value={contactForm.subject} onChange={e => setContactForm(f => ({ ...f, subject: e.target.value }))} />
                   </div>
                   <div>
                     <Label htmlFor="message">Message</Label>
-                    <Textarea 
-                      id="message" 
-                      placeholder="Tell us how we can help you..."
-                      rows={4}
-                    />
+                    <Textarea id="message" placeholder="Tell us how we can help you..." rows={4} value={contactForm.message} onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))} />
                   </div>
-                  <Button variant="hero" size="lg" className="w-full">
-                    Send Message
+                  <Button variant="hero" size="lg" className="w-full" type="submit" disabled={sendingMessage}>
+                    {sendingMessage ? "Sending..." : "Send Message"}
                   </Button>
                 </form>
               </CardContent>

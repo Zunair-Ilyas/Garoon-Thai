@@ -48,6 +48,8 @@ const ArticleManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ArticleFormData>({
@@ -82,16 +84,44 @@ const ArticleManager = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImageFile(null);
+      setImagePreview(null);
+    }
+  };
+
+  const getBase64FromFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const onSubmit = async (data: ArticleFormData) => {
-    console.log('Submitting article data:', data);
     setLoading(true);
     try {
+      let featuredImageBase64 = data.featured_image;
+      if (imageFile) {
+        featuredImageBase64 = await getBase64FromFile(imageFile);
+      }
       const articleData = {
         ...data,
+        featured_image: featuredImageBase64,
         published_at: data.status === "published" ? new Date().toISOString() : null
       };
-
-      console.log('Processed article data:', articleData);
 
       if (editingArticle) {
         const { data: result, error } = await supabase
@@ -105,7 +135,6 @@ const ArticleManager = () => {
           throw error;
         }
 
-        console.log('Update result:', result);
         toast({
           title: "Success",
           description: "Article updated successfully",
@@ -121,7 +150,6 @@ const ArticleManager = () => {
           throw error;
         }
 
-        console.log('Insert result:', result);
         toast({
           title: "Success",
           description: "Article created successfully",
@@ -156,6 +184,8 @@ const ArticleManager = () => {
     setValue("meta_description", article.meta_description || "");
     setValue("meta_keywords", article.meta_keywords || "");
     setValue("status", article.status === "scheduled" ? "draft" : article.status);
+    setImageFile(null);
+    setImagePreview(article.featured_image || null);
     setIsDialogOpen(true);
   };
 
@@ -197,6 +227,8 @@ const ArticleManager = () => {
       meta_description: "",
       meta_keywords: ""
     });
+    setImageFile(null);
+    setImagePreview(null);
     setIsDialogOpen(true);
   };
 
@@ -251,12 +283,16 @@ const ArticleManager = () => {
               </div>
 
               <div>
-                <Label htmlFor="featured_image">Featured Image URL</Label>
-                <Input 
-                  id="featured_image" 
-                  {...register("featured_image")} 
-                  placeholder="https://example.com/image.jpg"
+                <Label htmlFor="featured_image">Featured Image</Label>
+                <Input
+                  id="featured_image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
                 />
+                {imagePreview && (
+                  <img src={imagePreview} alt="Preview" className="mt-2 max-h-32 rounded" />
+                )}
               </div>
 
               <div>
@@ -416,3 +452,4 @@ const ArticleManager = () => {
 };
 
 export default ArticleManager;
+

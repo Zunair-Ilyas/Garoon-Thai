@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/Layout";
 import { Star, Clock, Users, Award, ArrowRight, Utensils, Heart, Globe } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-thai-dishes.jpg";
 import restaurantInterior from "@/assets/restaurant-interior.jpg";
@@ -35,6 +34,53 @@ interface Feature {
   is_active: boolean;
 }
 
+// Move these outside the component so they are not re-created on every render
+const defaultFeatures = [
+  {
+    icon: Utensils,
+    title: "Authentic Recipes",
+    description: "Traditional Thai dishes passed down through generations"
+  },
+  {
+    icon: Heart,
+    title: "Fresh Ingredients",
+    description: "Daily sourced premium ingredients for the perfect taste"
+  },
+  {
+    icon: Globe,
+    title: "Thai Culture",
+    description: "Experience the warmth of Thai hospitality and tradition"
+  }
+];
+
+const defaultStats = [
+  { icon: Star, value: "4.9", label: "Rating" },
+  { icon: Clock, value: "25+", label: "Years Experience" },
+  { icon: Users, value: "10K+", label: "Happy Customers" },
+  { icon: Award, value: "15+", label: "Awards Won" }
+];
+
+const defaultTestimonials = [
+  {
+    id: "1",
+    name: "Sarah Johnson",
+    rating: 5,
+    text: "The best Thai food I've ever had! The pad thai is absolutely incredible."
+  },
+  {
+    id: "2",
+    name: "Michael Chen",
+    rating: 5,
+    text: "Authentic flavors and amazing service. This place feels like Thailand!"
+  },
+  {
+    id: "3",
+    name: "Emma Davis",
+    rating: 5,
+    text: "Every dish is a masterpiece. The atmosphere is so warm and welcoming."
+  }
+];
+
 const Index = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [stats, setStats] = useState<StatItem[]>([]);
@@ -42,60 +88,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Default features in case database is empty
-  const defaultFeatures = [
-    {
-      icon: Utensils,
-      title: "Authentic Recipes",
-      description: "Traditional Thai dishes passed down through generations"
-    },
-    {
-      icon: Heart,
-      title: "Fresh Ingredients",
-      description: "Daily sourced premium ingredients for the perfect taste"
-    },
-    {
-      icon: Globe,
-      title: "Thai Culture",
-      description: "Experience the warmth of Thai hospitality and tradition"
-    }
-  ];
-
-  // Default stats in case database is empty
-  const defaultStats = [
-    { icon: Star, value: "4.9", label: "Rating" },
-    { icon: Clock, value: "25+", label: "Years Experience" },
-    { icon: Users, value: "10K+", label: "Happy Customers" },
-    { icon: Award, value: "15+", label: "Awards Won" }
-  ];
-
-  // Default testimonials in case database is empty
-  const defaultTestimonials = [
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      rating: 5,
-      text: "The best Thai food I've ever had! The pad thai is absolutely incredible."
-    },
-    {
-      id: "2",
-      name: "Michael Chen",
-      rating: 5,
-      text: "Authentic flavors and amazing service. This place feels like Thailand!"
-    },
-    {
-      id: "3",
-      name: "Emma Davis",
-      rating: 5,
-      text: "Every dish is a masterpiece. The atmosphere is so warm and welcoming."
-    }
-  ];
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -119,8 +112,8 @@ const Index = () => {
         is_active: true 
       })));
       
-      setTestimonials(defaultTestimonials);
-      
+      setTestimonials(defaultTestimonials.map(t => ({ ...t, is_active: true })));
+
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -131,10 +124,14 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const getIcon = (iconName: string) => {
-    const iconMap: { [key: string]: any } = {
+    const iconMap: { [key: string]: React.ElementType } = {
       Star,
       Clock,
       Users,
@@ -176,7 +173,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto animate-fade-in-up">
             <h1 className="font-playfair text-5xl md:text-7xl font-bold text-white mb-6">
               Welcome to{" "}
-              <span className="text-thai-gold">Garoon Thai</span>
+              <span className="text-thai-gold">Easy Go Thai</span>
             </h1>
             <p className="text-xl md:text-2xl text-thai-beige-light mb-8 leading-relaxed">
               Experience the authentic flavors of Thailand with our traditional recipes,
@@ -190,7 +187,7 @@ const Index = () => {
                 </Link>
               </Button>
               <Button variant="elegant" size="xl">
-                Order for Delivery
+                <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw ">Order for Delivery</a>
               </Button>
             </div>
           </div>
@@ -207,7 +204,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 animate-fade-in-up">
             <h2 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Why Choose <span className="text-thai-gold">Garoon Thai</span>
+              Why Choose <span className="text-thai-gold">Easy Go Thai</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               We bring you the authentic taste of Thailand with every dish crafted to perfection
@@ -266,7 +263,7 @@ const Index = () => {
                 Our <span className="text-thai-gold">Story</span>
               </h2>
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                For over 25 years, Garoon Thai has been bringing authentic Thai flavors to our community. 
+                For over 25 years, Easy Go Thai has been bringing authentic Thai flavors to our community.
                 Our journey began with a simple mission: to share the rich culinary heritage of Thailand 
                 through traditional recipes passed down through generations.
               </p>
@@ -341,7 +338,7 @@ const Index = () => {
                 Reserve a Table
               </Button>
               <Button variant="accent" size="xl">
-                Order for Pickup
+                <a href="https://www.foodbooking.com/ordering/restaurant/menu?restaurant_uid=84a846e1-57d7-448b-be3b-bdb68a484d17 ">Order for Pickup</a>
               </Button>
             </div>
           </div>

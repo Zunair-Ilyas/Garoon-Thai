@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/components/Layout";
-import { ShoppingCart, Star, Flame, Leaf } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,9 +21,9 @@ interface MenuItem {
   price: number;
   category_id?: string;
   image_url?: string;
-  delivery_link?: string;
-  pickup_link?: string;
   is_active: boolean;
+  is_gluten_free?: boolean;
+  is_vegan?: boolean;
 }
 
 const Menu = () => {
@@ -131,16 +130,6 @@ const Menu = () => {
             ))}
           </div>
 
-          {/* Order Buttons */}
-          <div className="flex justify-center gap-4 mb-12">
-            <Button variant="hero" size="lg" className="shadow-glow">
-              Order via Uber Eats
-            </Button>
-            <Button variant="accent" size="lg">
-              Schedule Pickup
-            </Button>
-          </div>
-
           {/* Menu Items Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredItems.map((item, index) => (
@@ -172,38 +161,9 @@ const Menu = () => {
                     {item.description || "Delicious Thai dish prepared with authentic ingredients"}
                   </p>
 
-                  <div className="flex gap-2">
-                    {item.delivery_link && (
-                      <Button 
-                        variant="hero" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => window.open(item.delivery_link, '_blank')}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Delivery
-                      </Button>
-                    )}
-                    {item.pickup_link && (
-                      <Button 
-                        variant="accent" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => window.open(item.pickup_link, '_blank')}
-                      >
-                        Pickup
-                      </Button>
-                    )}
-                    {!item.delivery_link && !item.pickup_link && (
-                      <Button 
-                        variant="hero" 
-                        size="sm" 
-                        className="w-full"
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Order Now
-                      </Button>
-                    )}
+                  <div className="flex gap-2 mb-2">
+                    {item.is_gluten_free && <Badge variant="outline">Gluten Free</Badge>}
+                    {item.is_vegan && <Badge variant="outline">Vegan</Badge>}
                   </div>
                 </CardContent>
               </Card>

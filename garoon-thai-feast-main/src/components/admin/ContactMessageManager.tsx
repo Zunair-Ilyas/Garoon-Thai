@@ -1,34 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Trash2, Eye, CheckCircle, Loader2 } from "lucide-react";
+import { Mail, Trash2, Eye, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface ContactMessage {
+  id: string;
   name: string;
   email: string;
-  subject: string;
   message: string;
-  timestamp: string;
-  status: string;
-}
-
-// Define a local type for Supabase message rows
-interface SupabaseMessage {
-  email: string;
-  subscribed_at: string;
-  is_subscribed?: boolean;
-  metadata?: {
-    name?: string;
-    subject?: string;
-    message?: string;
-    type?: string;
-    status?: string;
-  };
+  created_at: string;
 }
 
 const ContactMessageManager = () => {
@@ -51,11 +35,9 @@ const ContactMessageManager = () => {
     setIsLoading(true);
     try {
       const { data: dbMessages, error: dbError } = await supabase
-        .from('member_subscriptions')
+        .from('contact_messages')
         .select('*')
-        .eq('is_subscribed', false)
-        .eq('metadata->>type', 'contact_form')
-        .order('subscribed_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (dbError) {
         handleError(dbError, "Failed to load contact messages");
@@ -68,16 +50,7 @@ const ContactMessageManager = () => {
         return;
       }
 
-      // Use SupabaseMessage type instead of any
-      const sanitizedMessages = (dbMessages as SupabaseMessage[]).map((dbMsg) => ({
-        name: sanitizeInput(dbMsg.metadata?.name) || 'Unknown',
-        email: sanitizeInput(dbMsg.email),
-        subject: sanitizeInput(dbMsg.metadata?.subject) || 'Contact Form Submission',
-        message: sanitizeInput(dbMsg.metadata?.message) || '',
-        timestamp: dbMsg.subscribed_at,
-        status: dbMsg.metadata?.status || 'pending'
-      }));
-      setMessages(sanitizedMessages);
+      setMessages(dbMessages as ContactMessage[]);
     } catch (error) {
       handleError(error, "Failed to load contact messages");
     } finally {
@@ -92,23 +65,19 @@ const ContactMessageManager = () => {
   const deleteMessage = async (message: ContactMessage) => {
     setIsLoading(true);
     try {
-      if (!message.email || !message.timestamp) {
+      if (!message.id) {
         handleError(new Error("Invalid message data"), "Failed to delete message");
         return;
       }
       const { error: dbError } = await supabase
-        .from('member_subscriptions')
+        .from('contact_messages')
         .delete()
-        .eq('email', message.email)
-        .eq('metadata->>type', 'contact_form')
-        .eq('subscribed_at', message.timestamp);
+        .eq('id', message.id);
       if (dbError) {
         handleError(dbError, "Failed to delete message");
         return;
       }
-      setMessages(messages.filter(msg =>
-        msg.email !== message.email || msg.timestamp !== message.timestamp
-      ));
+      setMessages(messages.filter(msg => msg.id !== message.id));
       toast({
         title: "Success",
         description: "Message deleted successfully",
@@ -120,67 +89,6 @@ const ContactMessageManager = () => {
       setMessageToDelete(null);
     }
   };
-
-  const markAsRead = async (message: ContactMessage) => {
-    setIsLoading(true);
-
-    try {
-      if (!message.email || !message.timestamp) {
-        handleError(new Error("Invalid message data"), "Failed to mark as read");
-        return;
-      }
-      // First, fetch the existing record to preserve metadata
-      const { data: rawRecord, error: fetchError } = await supabase
-        .from('member_subscriptions')
-        .select('metadata')
-        .eq('email', message.email)
-        .eq('metadata->>type', 'contact_form')
-        .eq('subscribed_at', message.timestamp)
-        .single();
-      if (fetchError) {
-        handleError(fetchError, "Failed to fetch message record");
-        return;
-      }
-      // TypeScript workaround: metadata is not in the schema, so we cast to any
-      const existingRecord = rawRecord as { metadata?: Record<string, unknown> } | null;
-      if (!existingRecord || !existingRecord.metadata || typeof existingRecord.metadata !== 'object') {
-        handleError(new Error("Message not found or missing metadata"), "Failed to mark as read");
-        return;
-      }
-      // Update the record while preserving existing metadata
-      const updatedMetadata: Record<string, unknown> = {
-        ...existingRecord.metadata,
-        status: 'read'
-      };
-      // TypeScript workaround: metadata is not in the schema, so we cast the update object to Record<string, unknown>
-
-      const { error: updateError } = await supabase
-        .from('member_subscriptions')
-        .update({ metadata: updatedMetadata } as Record<string, unknown>)
-        .eq('email', message.email)
-        .eq('metadata->>type', 'contact_form')
-        .eq('subscribed_at', message.timestamp);
-      if (updateError) {
-        handleError(updateError, "Failed to update message status");
-        return;
-      }
-      // Update local state
-      setMessages(messages.map(msg =>
-        msg.email === message.email && msg.timestamp === message.timestamp
-          ? { ...msg, status: 'read' }
-          : msg
-      ));
-      toast({
-        title: "Success",
-        description: "Message marked as read",
-      });
-    } catch (error) {
-      handleError(error, "Failed to mark as read");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
 
   const sanitizeInput = (input: string | undefined): string => {
     if (!input) return '';
@@ -194,9 +102,9 @@ const ContactMessageManager = () => {
   const exportMessages = () => {
     try {
       const csvContent = "data:text/csv;charset=utf-8," 
-        + "Name,Email,Subject,Message,Timestamp,Status\n"
-        + messages.map(msg => 
-            `"${msg.name}","${msg.email}","${msg.subject}","${msg.message}","${msg.timestamp}","${msg.status}"`
+        + "Name,Email,Message,Created At\n"
+        + messages.map(msg =>
+            `"${msg.name}","${msg.email}","${msg.message}","${msg.created_at}"`
           ).join("\n");
       
       const encodedUri = encodeURI(csvContent);
@@ -257,9 +165,7 @@ const ContactMessageManager = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Subject</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -268,13 +174,7 @@ const ContactMessageManager = () => {
                   <TableRow key={index}>
                     <TableCell className="font-medium">{message.name}</TableCell>
                     <TableCell>{message.email}</TableCell>
-                    <TableCell>{message.subject}</TableCell>
-                    <TableCell>{formatDate(message.timestamp)}</TableCell>
-                    <TableCell>
-                      <Badge variant={message.status === 'read' ? "default" : "secondary"}>
-                        {message.status === 'read' ? 'Read' : 'New'}
-                      </Badge>
-                    </TableCell>
+                    <TableCell>{formatDate(message.created_at)}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
@@ -284,24 +184,15 @@ const ContactMessageManager = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {message.status !== 'read' && (
-                                                  <Button
+                        <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => markAsRead(message)}
+                          onClick={() => setMessageToDelete(message)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          disabled={isLoading}
                         >
-                          <CheckCircle className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setMessageToDelete(message)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        disabled={isLoading}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -355,23 +246,15 @@ const ContactMessageManager = () => {
                 ×
               </Button>
             </div>
-            
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">From:</label>
                 <p className="font-medium">{selectedMessage.name} ({selectedMessage.email})</p>
               </div>
-              
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Subject:</label>
-                <p>{selectedMessage.subject}</p>
-              </div>
-              
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Date:</label>
-                <p>{formatDate(selectedMessage.timestamp)}</p>
+                <p>{formatDate(selectedMessage.created_at)}</p>
               </div>
-              
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Message:</label>
                 <div className="mt-2 p-4 bg-muted rounded-lg">
@@ -379,11 +262,10 @@ const ContactMessageManager = () => {
                 </div>
               </div>
             </div>
-            
             <div className="flex justify-end gap-2 mt-6">
               <Button
                 variant="outline"
-                onClick={() => window.open(`mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject}`)}
+                onClick={() => window.open(`mailto:${selectedMessage.email}`)}
               >
                 Reply via Email
               </Button>

@@ -98,7 +98,7 @@ const Auth = () => {
         <Card className="card-elegant border-thai-gold/20">
           <CardHeader className="text-center">
             <CardTitle className="font-playfair text-2xl text-foreground">
-              Garoon Thai Admin
+              Easy Go Thai Admin
             </CardTitle>
             <p className="text-muted-foreground">
               Access your restaurant management dashboard
@@ -120,7 +120,7 @@ const Auth = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@garoonthai.com"
+                      placeholder="admin@easygothai.com"
                       required
                     />
                   </div>
@@ -170,7 +170,7 @@ const Auth = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@garoonthai.com"
+                      placeholder="admin@easygothai.com"
                       required
                     />
                   </div>

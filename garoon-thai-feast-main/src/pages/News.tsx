@@ -193,26 +193,18 @@ const News = () => {
 
     setSendingMessage(true);
     try {
-      console.log('Processing contact form submission:', contactForm);
-      
-      // Store contact form submission in database
-      const { data: dbData, error: dbError } = await supabase
-        .from('member_subscriptions')
-        .insert([{
-          email: contactForm.email,
-          is_subscribed: false, // Mark as not subscribed since this is a contact form
-          subscribed_at: new Date().toISOString(),
-          metadata: {
-            type: 'contact_form',
+      // Store contact form submission in contact_messages table
+      const { error: dbError } = await supabase
+        .from('contact_messages')
+        .insert([
+          {
             name: contactForm.name,
-            subject: contactForm.subject || 'Contact Form Submission',
+            email: contactForm.email,
             message: contactForm.message
           }
-        }])
-        .select();
+        ]);
 
       if (dbError) {
-        console.error('Database insert failed:', dbError);
         toast({
           title: "Error",
           description: "Failed to send message. Please try again later.",
@@ -221,46 +213,20 @@ const News = () => {
         return;
       }
 
-      console.log('Successfully stored in database:', dbData);
-
-      // Log the contact form submission for debugging
-      console.log('Contact form submission:', {
-        to: 'izunair38@gmail.com',
-        from: contactForm.email,
-        subject: contactForm.subject || 'Contact Form Submission',
-        message: contactForm.message,
-        name: contactForm.name,
-        timestamp: new Date().toISOString()
-      });
-
-      // Show success message
       toast({
         title: "Message Sent Successfully!",
         description: "Your message has been sent and will be reviewed by our team. We'll get back to you soon!",
       });
-      
-      // Clear the form
       setContactForm({
         name: "",
         email: "",
         subject: "",
         message: ""
       });
-
     } catch (error) {
-      console.error('Error sending email:', error);
-      
-      // Fallback: Store message locally and show instructions
-      const contactMessages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      contactMessages.push({
-        ...contactForm,
-        timestamp: new Date().toISOString()
-      });
-      localStorage.setItem('contact_messages', JSON.stringify(contactMessages));
-      
       toast({
         title: "Message Saved",
-        description: "Your message has been saved. Please contact us directly at izunair38@gmail.com",
+        description: "Your message has been saved locally. Please contact us directly if urgent.",
         variant: "destructive",
       });
     } finally {
@@ -292,7 +258,7 @@ const News = () => {
             News & Events
           </h1>
           <p className="text-xl text-thai-charcoal/80 max-w-2xl mx-auto">
-            Stay updated with the latest happenings at Garoon Thai
+            Stay updated with the latest happenings at Easy Go Thai
           </p>
         </div>
       </section>
@@ -562,3 +528,4 @@ const News = () => {
 };
 
 export default News;
+
