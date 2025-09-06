@@ -149,7 +149,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-playfair text-2xl font-bold text-thai-gold">
-                Garoon Thai Admin
+                Easy Go Thai Admin
               </h1>
               <p className="text-thai-beige-light text-sm">
                 Welcome back, {user?.email}
