@@ -334,9 +334,9 @@ const Index = () => {
               Visit us today or order online for an authentic Thai dining experience
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="elegant" size="xl">
-                Reserve a Table
-              </Button>
+              {/*<Button variant="elegant" size="xl">*/}
+              {/*  Reserve a Table*/}
+              {/*</Button>*/}
               <Button variant="accent" size="xl">
                 <a href="https://www.foodbooking.com/ordering/restaurant/menu?restaurant_uid=84a846e1-57d7-448b-be3b-bdb68a484d17 ">Order for Pickup</a>
               </Button>
