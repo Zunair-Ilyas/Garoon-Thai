@@ -190,7 +190,7 @@ const Index = () => {
                 <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw ">Order for Delivery</a>
               </Button>
               <Button variant="accent" size="xl">
-                <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw">Order for Pickup</a>
+                <a href="https://www.foodbooking.com/ordering/restaurant/menu?restaurant_uid=84a846e1-57d7-448b-be3b-bdb68a484d17">Order for Pickup</a>
               </Button>
             </div>
           </div>
