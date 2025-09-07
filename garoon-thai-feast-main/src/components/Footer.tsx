@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Clock, Facebook, LucideStar, LucideCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import tripAdvisor from '../../public/tripadvisor.svg'
 
 interface BusinessHours {
   [day: string]: string;
@@ -174,7 +175,8 @@ const Footer = () => {
                   aria-disabled={!contactInfo?.social_links?.tripadvisor}
                   aria-label="TripAdvisor"
                 >
-                  <LucideStar className="h-5 w-5" />
+                  {/*<LucideStar className="h-5 w-5" />*/}
+                  <img src={tripAdvisor} className="h-5 w-5"/>
                 </a>
               </div>
             </div>

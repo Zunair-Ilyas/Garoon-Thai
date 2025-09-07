@@ -5,8 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/Layout";
 import { Star, Clock, Users, Award, ArrowRight, Utensils, Heart, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from "@/assets/hero-thai-dishes.jpg";
-import restaurantInterior from "@/assets/restaurant-interior.jpg";
+// import heroImage from "@/assets/hero-thai-dishes.jpg";
+import main_photo from '../../public/main_photo.jpg'
+// import restaurantInterior from "@/assets/restaurant-interior.jpg";
+import gong_on_fire from '../../public/gong_on_fire.jpg'
 
 interface Testimonial {
   id: string;
@@ -163,7 +165,7 @@ const Index = () => {
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          style={{ backgroundImage: `url(${main_photo})` }}
         >
           <div className="absolute inset-0 bg-thai-charcoal/60"></div>
         </div>
@@ -238,54 +240,61 @@ const Index = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-thai-charcoal">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => {
-              const IconComponent = getIcon(stat.icon_name);
-              return (
-                <div key={stat.id} className="text-center animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <div className="w-12 h-12 bg-hero-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-                    <IconComponent className="h-6 w-6 text-thai-charcoal" />
-                  </div>
-                  <div className="text-3xl font-bold text-thai-gold mb-2">{stat.value}</div>
-                  <div className="text-thai-beige-light text-sm">{stat.label}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/*<section className="py-16 bg-thai-charcoal">*/}
+      {/*  <div className="container mx-auto px-4">*/}
+      {/*    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">*/}
+      {/*      {stats.map((stat, index) => {*/}
+      {/*        const IconComponent = getIcon(stat.icon_name);*/}
+      {/*        return (*/}
+      {/*          <div key={stat.id} className="text-center animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>*/}
+      {/*            <div className="w-12 h-12 bg-hero-gradient rounded-full flex items-center justify-center mx-auto mb-4">*/}
+      {/*              <IconComponent className="h-6 w-6 text-thai-charcoal" />*/}
+      {/*            </div>*/}
+      {/*            <div className="text-3xl font-bold text-thai-gold mb-2">{stat.value}</div>*/}
+      {/*            <div className="text-thai-beige-light text-sm">{stat.label}</div>*/}
+      {/*          </div>*/}
+      {/*        );*/}
+      {/*      })}*/}
+      {/*    </div>*/}
+      {/*  </div>*/}
+      {/*</section>*/}
 
       {/* About Preview Section */}
       <section className="py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-in-up">
-              <h2 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-6">
-                Our <span className="text-thai-gold">Story</span>
+              <h2 className="font-playfair text-4xl md:text-3xl font-bold text-foreground mb-6">
+                Welcome to <span className="text-thai-gold">EasyGo Thai @ the Mount</span>
               </h2>
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                For over 25 years, Easy Go Thai has been bringing authentic Thai flavors to our community.
-                Our journey began with a simple mission: to share the rich culinary heritage of Thailand 
-                through traditional recipes passed down through generations.
+                Our <span className="text-thai-gold">Restaurant...</span>
               </p>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Every dish is prepared with love, using the finest ingredients and time-honored techniques 
-                that capture the essence of Thai cuisine.
+                Thai food is famous around the world; and we promise to try and offer you the best food and service
+                possible. Our restaurant is not large or fancy, but we pride ourselves on top quality ingredients,
+                service, and tasty authentic dishes.
+
+                Check out our menus for Dine-In, Takeaway, or Delivery and come and join us on our journey, you will not
+                be disappointed...
+              </p>
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                EasyGo Thai restaurant @ the Mount is part of the Garoon Thai group  (การุณไทย). The word “garoon” has a
+
+                meaning difficult to translate accurately in English- but the closest translation is “kindness to others”.
               </p>
               <Button variant="hero" size="lg" asChild>
                 <Link to="/about">
                   Learn More About Us
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-5 w-5"/>
                 </Link>
               </Button>
             </div>
             <div className="animate-scale-in">
-              <img 
-                src={restaurantInterior} 
-                alt="Garoon Thai Restaurant Interior" 
-                className="rounded-lg shadow-elegant w-full h-auto"
+              <img
+                  src={gong_on_fire}
+                  alt="Garoon Thai Restaurant Interior"
+                  className="rounded-lg shadow-elegant w-full h-auto"
               />
             </div>
           </div>

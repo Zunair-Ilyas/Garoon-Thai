@@ -53,9 +53,9 @@ const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="elegant" size="sm">
-              <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw ">Order Now</a>
-            </Button>
+            {/*<Button variant="elegant" size="sm">*/}
+            {/*  <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw ">Order Now</a>*/}
+            {/*</Button>*/}
             <Button variant="hero" size="sm" asChild>
               <Link to="/auth">Admin</Link>
             </Button>
@@ -91,12 +91,12 @@ const Header = () => {
                 </Link>
               ))}
               <div className="flex flex-col space-y-2 pt-4">
-                <Button variant="elegant" size="sm" onClick={() => setIsMenuOpen(false)}>
-                  Order Now
-                </Button>
-                <Button variant="hero" size="sm" onClick={() => setIsMenuOpen(false)}>
-                  Reserve Table
-                </Button>
+                {/*<Button variant="elegant" size="sm" onClick={() => setIsMenuOpen(false)}>*/}
+                {/*  Order Now*/}
+                {/*</Button>*/}
+                {/*<Button variant="hero" size="sm" onClick={() => setIsMenuOpen(false)}>*/}
+                {/*  Reserve Table*/}
+                {/*</Button>*/}
               </div>
             </nav>
           </div>
