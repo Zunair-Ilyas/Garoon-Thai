@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,9 +37,14 @@ const SEOManager = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const { register, handleSubmit, setValue } = useForm<SEOFormData>({
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const { register, handleSubmit, setValue, watch } = useForm<SEOFormData>({
     resolver: zodResolver(seoSchema)
   });
+
+  // Watch og_image for preview
+  const ogImage = watch("og_image");
 
   useEffect(() => {
     fetchSEOSettings();
@@ -121,6 +126,28 @@ const SEOManager = () => {
     }
   };
 
+  // Add image upload handler with 2MB limit
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { // 2MB
+      toast({
+        title: "Image too large",
+        description: "Please upload an image smaller than 2MB.",
+        variant: "destructive",
+      });
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setValue("og_image", reader.result, { shouldValidate: true });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="font-playfair text-2xl font-bold text-foreground">SEO Settings</h2>
@@ -186,14 +213,29 @@ const SEOManager = () => {
           </CardHeader>
           <CardContent>
             <div>
-              <Label htmlFor="og_image">Open Graph Image URL</Label>
-              <Input 
-                id="og_image" 
-                {...register("og_image")} 
-                placeholder="https://example.com/og-image.jpg"
+              <Label htmlFor="og_image">Open Graph Image</Label>
+              <input
+                id="og_image_upload"
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                className="block mb-2 mt-1"
               />
+              {ogImage && (
+                <div className="mb-2">
+                  <img
+                    src={ogImage}
+                    alt="Open Graph Preview"
+                    className="max-h-40 rounded border"
+                    style={{ objectFit: "contain" }}
+                  />
+                </div>
+              )}
+              {/* Hidden input to keep og_image in form state */}
+              <input type="hidden" {...register("og_image")} />
               <p className="text-sm text-muted-foreground mt-1">
-                Recommended size: 1200x630 pixels. This image will be shown when your site is shared on social media.
+                Upload an image (will be stored as base64). Recommended size: 1200x630 pixels. This image will be shown when your site is shared on social media.
               </p>
             </div>
           </CardContent>

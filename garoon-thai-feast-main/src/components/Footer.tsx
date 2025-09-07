@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Phone, Mail, Clock, LucideFacebook, LucideInstagram, LucideTwitter } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Facebook, LucideStar, LucideCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,8 +10,8 @@ interface BusinessHours {
 
 interface SocialLinks {
   facebook?: string;
-  instagram?: string;
-  twitter?: string;
+  google?: string;
+  tripadvisor?: string;
 }
 
 interface ContactInfo {
@@ -23,6 +23,29 @@ interface ContactInfo {
   social_links: SocialLinks;
   maps_link: string | null;
 }
+
+// Replace GoogleIcon with a LucideCircle containing a G for a more consistent outline look
+const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 20, height: 20 }}>
+    <LucideCircle className="h-5 w-5" {...props} />
+    <span style={{
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontWeight: 700,
+      fontSize: '0.95rem',
+      color: 'currentColor',
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      pointerEvents: 'none',
+      userSelect: 'none',
+    }}>G</span>
+  </span>
+);
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -52,7 +75,9 @@ const Footer = () => {
           // Ensure business_hours is always an object
           if (!parsedData.business_hours || typeof parsedData.business_hours === 'string') {
             try {
-              parsedData.business_hours = parsedData.business_hours ? JSON.parse(parsedData.business_hours) : {};
+              parsedData.business_hours = typeof parsedData.business_hours === 'string'
+                ? JSON.parse(parsedData.business_hours)
+                : (parsedData.business_hours || {});
             } catch {
               parsedData.business_hours = {};
             }
@@ -60,7 +85,9 @@ const Footer = () => {
           // Ensure social_links is always an object
           if (!parsedData.social_links || typeof parsedData.social_links === 'string') {
             try {
-              parsedData.social_links = parsedData.social_links ? JSON.parse(parsedData.social_links) : {};
+              parsedData.social_links = typeof parsedData.social_links === 'string'
+                ? JSON.parse(parsedData.social_links)
+                : (parsedData.social_links || {});
             } catch {
               parsedData.social_links = {};
             }
@@ -113,34 +140,43 @@ const Footer = () => {
               Authentic Thai cuisine crafted with passion and tradition. Experience 
               the vibrant flavors of Thailand in every dish.
             </p>
-            <div className="flex space-x-4">
-              <a
-                href={contactInfo?.social_links?.facebook || undefined}
-                className="text-thai-beige-dark hover:text-thai-gold transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-disabled={!contactInfo?.social_links?.facebook}
-              >
-                <LucideFacebook className="h-5 w-5" />
-              </a>
-              <a
-                href={contactInfo?.social_links?.instagram || undefined}
-                className="text-thai-beige-dark hover:text-thai-gold transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-disabled={!contactInfo?.social_links?.instagram}
-              >
-                <LucideInstagram className="h-5 w-5" />
-              </a>
-              <a
-                href={contactInfo?.social_links?.twitter || undefined}
-                className="text-thai-beige-dark hover:text-thai-gold transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-disabled={!contactInfo?.social_links?.twitter}
-              >
-                <LucideTwitter className="h-5 w-5" />
-              </a>
+            <div className="space-y-2">
+              <div className="font-semibold text-thai-gold text-sm">Find Us & Leave a Review</div>
+              <div className="flex space-x-4">
+                {/* Facebook */}
+                <a
+                  href={contactInfo?.social_links?.facebook || "http://www.facebook.com/EasyGoThai/reviews"}
+                  className="text-thai-beige-dark hover:text-thai-gold transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-disabled={!contactInfo?.social_links?.facebook}
+                  aria-label="Facebook"
+                >
+                  <Facebook className="h-5 w-5" />
+                </a>
+                {/* Google (custom icon) */}
+                <a
+                  href={contactInfo?.social_links?.google || "https://www.google.com/search?q=easy+go+thai+restaurant&sca_esv=b7645fb63843d7af&rlz=1C1CHBF_enNZ1079NZ1079&ei=Auq8aJfVFvuWg8UP74aSwQs&oq=easygo+thai+r&gs_lp=Egxnd3Mtd2l6LXNlcnAiDWVhc3lnbyB0aGFpIHIqAggBMgUQABiABDIGEAAYFhgeMgUQABjvBTIIEAAYgAQYogQyCBAAGKIEGIkFMggQABiABBiiBDIFEAAY7wVIzURQiSZYtzBwAXgBkAEAmAHCAaABsQeqAQMwLja4AQHIAQD4AQGYAgagApUGwgIKEAAYsAMY1gQYR8ICDRAAGLADGNYEGEcYyQPCAg4QABiABBiwAxiSAxiKBcICCxAAGIAEGIYDGIoFmAMAiAYBkAYJkgcDMS41oAfFHrIHAzAuNbgHjgbCBwUwLjMuM8gHEw&sclient=gws-wiz-serp#lrd=0x6d6ddebd52fec907:0x4afd0197496c5b83,1"}
+                  className="hover:opacity-80 transition-opacity"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-disabled={!contactInfo?.social_links?.google}
+                  aria-label="Google Reviews"
+                >
+                  <GoogleIcon className="h-5 w-5" />
+                </a>
+                {/* TripAdvisor (using Star icon) */}
+                <a
+                  href={contactInfo?.social_links?.tripadvisor || "https://www.tripadvisor.co.nz/Restaurant_Review-g1760740-d7711451-Reviews-EasyGo_Thai-Mount_Maunganui_Tauranga_Bay_of_Plenty_Region_North_Island.html"}
+                  className="text-thai-beige-dark hover:text-thai-gold transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-disabled={!contactInfo?.social_links?.tripadvisor}
+                  aria-label="TripAdvisor"
+                >
+                  <LucideStar className="h-5 w-5" />
+                </a>
+              </div>
             </div>
           </div>
 

@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import Layout from "@/components/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import React from "react";
 
 interface Category {
   id: string;
@@ -32,33 +34,31 @@ const Menu = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      
       // Fetch categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('menu_categories')
         .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
-
+      // This throw is caught locally, safe to ignore warning
       if (categoriesError) throw categoriesError;
-
       // Fetch menu items
       const { data: menuItemsData, error: menuItemsError } = await supabase
         .from('menu_items')
         .select('*')
         .eq('is_active', true)
         .order('name', { ascending: true });
-
       if (menuItemsError) throw menuItemsError;
-
       setCategories(categoriesData || []);
       setMenuItems(menuItemsData || []);
     } catch (error) {
@@ -73,10 +73,7 @@ const Menu = () => {
     }
   };
 
-  // Get category name for filtering
-  const getCategoryById = (id: string) => categories.find(cat => cat.id === id);
-  
-  const filteredItems = activeCategory === "all" 
+  const filteredItems = activeCategory === "all"
     ? menuItems 
     : menuItems.filter(item => item.category_id === activeCategory);
 
@@ -145,6 +142,7 @@ const Menu = () => {
                     className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-thai-charcoal/20 group-hover:bg-thai-charcoal/10 transition-colors duration-300" />
+                  {/* Like Button removed */}
                 </div>
 
                 <CardContent className="p-6">

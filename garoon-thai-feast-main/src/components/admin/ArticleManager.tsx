@@ -87,6 +87,17 @@ const ArticleManager = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (file.size > 2 * 1024 * 1024) { // 2MB
+        toast({
+          title: "Image too large",
+          description: "Please upload an image smaller than 2MB.",
+          variant: "destructive",
+        });
+        e.target.value = "";
+        setImageFile(null);
+        setImagePreview(null);
+        return;
+      }
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -452,4 +463,3 @@ const ArticleManager = () => {
 };
 
 export default ArticleManager;
-
