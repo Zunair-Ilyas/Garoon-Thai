@@ -189,6 +189,9 @@ const Index = () => {
               <Button variant="elegant" size="xl">
                 <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw ">Order for Delivery</a>
               </Button>
+              <Button variant="accent" size="xl">
+                <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw">Order for Pickup</a>
+              </Button>
             </div>
           </div>
         </div>
@@ -334,14 +337,14 @@ const Index = () => {
               Visit us today or order online for an authentic Thai dining experience
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="elegant" size="xl" asChild>
-                <Link to="/menu">
-                  Reserve a Table
-                </Link>
-              </Button>
-              <Button variant="accent" size="xl">
-                <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw">Order for Pickup</a>
-              </Button>
+              {/*<Button variant="elegant" size="xl" asChild>*/}
+              {/*  <Link to="/menu">*/}
+              {/*    Reserve a Table*/}
+              {/*  </Link>*/}
+              {/*</Button>*/}
+              {/*<Button variant="accent" size="xl">*/}
+              {/*  <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw">Order for Pickup</a>*/}
+              {/*</Button>*/}
             </div>
           </div>
         </div>
