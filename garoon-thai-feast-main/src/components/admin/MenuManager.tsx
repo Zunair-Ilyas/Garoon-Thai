@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, DollarSign, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, DollarSign, Eye, EyeOff, Search, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,6 +28,8 @@ const menuItemSchema = z.object({
   is_active: z.boolean(),
   is_gluten_free: z.boolean().optional(),
   is_vegan: z.boolean().optional(),
+  is_spicy: z.boolean().optional(), // new
+  is_vegetarian: z.boolean().optional(), // new
 });
 
 type MenuItemFormData = z.infer<typeof menuItemSchema>;
@@ -45,6 +47,8 @@ interface MenuItem {
   is_active: boolean;
   is_gluten_free?: boolean;
   is_vegan?: boolean;
+  is_spicy?: boolean; // new
+  is_vegetarian?: boolean; // new
   created_at: string;
   updated_at: string;
 }
@@ -107,6 +111,8 @@ const MenuManager = () => {
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const { toast } = useToast();
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<MenuItemFormData>({
@@ -114,7 +120,9 @@ const MenuManager = () => {
     defaultValues: {
       is_active: true,
       is_gluten_free: false,
-      is_vegan: false
+      is_vegan: false,
+      is_spicy: false, // new
+      is_vegetarian: false, // new
     }
   });
 
@@ -125,6 +133,12 @@ const MenuManager = () => {
     fetchCategories(setCategories, toast);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => setSearch(searchInput), 250);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -178,7 +192,9 @@ const MenuManager = () => {
         category_id: data.category_id || null,
         is_active: data.is_active ?? true,
         is_gluten_free: data.is_gluten_free ?? false,
-        is_vegan: data.is_vegan ?? false
+        is_vegan: data.is_vegan ?? false,
+        is_spicy: data.is_spicy ?? false, // new
+        is_vegetarian: data.is_vegetarian ?? false, // new
       };
       if (editingItem) {
         const { error } = await supabase
@@ -223,7 +239,9 @@ const MenuManager = () => {
       reset({
         is_active: true,
         is_gluten_free: false,
-        is_vegan: false
+        is_vegan: false,
+        is_spicy: false, // new
+        is_vegetarian: false, // new
       });
       setImageFile(null);
       setImagePreview(null);
@@ -253,6 +271,8 @@ const MenuManager = () => {
     setValue("is_active", item.is_active);
     setValue("is_gluten_free", item.is_gluten_free ?? false);
     setValue("is_vegan", item.is_vegan ?? false);
+    setValue("is_spicy", item.is_spicy ?? false); // new
+    setValue("is_vegetarian", item.is_vegetarian ?? false); // new
     setImageFile(null);
     setImagePreview(item.image_url || null);
     setIsDialogOpen(true);
@@ -297,6 +317,8 @@ const MenuManager = () => {
       is_active: true,
       is_gluten_free: false,
       is_vegan: false,
+      is_spicy: false, // new
+      is_vegetarian: false, // new
       name: "",
       description: "",
       price: "",
@@ -311,10 +333,52 @@ const MenuManager = () => {
     setIsDialogOpen(true);
   };
 
+  // Filtered menu items for table
+  const filteredMenuItems = menuItems.filter(item => {
+    const q = search.toLowerCase();
+    const cat = categories.find(c => c.id === item.category_id)?.name?.toLowerCase() || "";
+    return (
+      item.name.toLowerCase().includes(q) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      cat.includes(q)
+    );
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <h2 className="font-playfair text-2xl font-bold text-foreground">Menu Management</h2>
+        <div className="relative w-full md:w-80">
+          <Input
+            type="text"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            placeholder="🔍 Search by name, description, or category..."
+            className="pl-10 pr-10 py-2 text-sm border border-thai-gold/60 focus:border-thai-gold focus:ring-2 focus:ring-thai-gold rounded-full shadow-sm transition-all duration-200 bg-white/80"
+            onKeyDown={e => {
+              if (e.key === 'Escape') setSearchInput("");
+              if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                (e.target as HTMLInputElement).select();
+              }
+            }}
+            aria-label="Search menu items"
+          />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-thai-gold pointer-events-none">
+            <Search className="h-4 w-4" />
+          </span>
+          {searchInput && (
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-thai-gold bg-white/80 rounded-full p-1 transition-colors"
+              onClick={() => setSearchInput("")}
+              tabIndex={0}
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="hero" onClick={handleNewItem}>
@@ -406,23 +470,23 @@ const MenuManager = () => {
                 </div>
               </div>
 
-              {/* Gluten Free & Vegan Switches */}
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_gluten_free"
-                    checked={watch("is_gluten_free")}
-                    onCheckedChange={(checked) => setValue("is_gluten_free", checked)}
-                  />
+              {/* Gluten Free, Vegan, Spicy, Vegetarian Switches */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch id="is_gluten_free" {...register("is_gluten_free")} checked={watch("is_gluten_free") || false} onCheckedChange={v => setValue("is_gluten_free", v)} />
                   <Label htmlFor="is_gluten_free">Gluten Free</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_vegan"
-                    checked={watch("is_vegan")}
-                    onCheckedChange={(checked) => setValue("is_vegan", checked)}
-                  />
+                <div className="flex items-center gap-2">
+                  <Switch id="is_vegan" {...register("is_vegan")} checked={watch("is_vegan") || false} onCheckedChange={v => setValue("is_vegan", v)} />
                   <Label htmlFor="is_vegan">Vegan</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch id="is_spicy" {...register("is_spicy")} checked={watch("is_spicy") || false} onCheckedChange={v => setValue("is_spicy", v)} />
+                  <Label htmlFor="is_spicy">Spicy</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch id="is_vegetarian" {...register("is_vegetarian")} checked={watch("is_vegetarian") || false} onCheckedChange={v => setValue("is_vegetarian", v)} />
+                  <Label htmlFor="is_vegetarian">Vegetarian</Label>
                 </div>
               </div>
 
@@ -492,13 +556,15 @@ const MenuManager = () => {
                 <TableHead>Price</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Gluten Free</TableHead>
+                <TableHead>GF</TableHead>
                 <TableHead>Vegan</TableHead>
+                <TableHead>Spicy</TableHead>
+                <TableHead>Vegetarian</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>
                     <div>
@@ -525,6 +591,12 @@ const MenuManager = () => {
                   </TableCell>
                   <TableCell>
                     {item.is_vegan ? <Badge variant="outline">Vegan</Badge> : null}
+                  </TableCell>
+                  <TableCell>
+                    {item.is_spicy ? <Badge variant="outline">Spicy</Badge> : null}
+                  </TableCell>
+                  <TableCell>
+                    {item.is_vegetarian ? <Badge variant="outline">Vegetarian</Badge> : null}
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">

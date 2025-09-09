@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Clock, Facebook, LucideStar, LucideCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import tripAdvisor from '../../public/tripadvisor.svg'
+import tripAdvisor from '/tripadvisor.svg'
 
 interface BusinessHours {
   [day: string]: string;

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import React from "react";
+import { Search, X } from "lucide-react";
 
 interface Category {
   id: string;
@@ -26,6 +27,8 @@ interface MenuItem {
   is_active: boolean;
   is_gluten_free?: boolean;
   is_vegan?: boolean;
+  is_spicy?: boolean; // new
+  is_vegetarian?: boolean; // new
 }
 
 const Menu = () => {
@@ -33,6 +36,8 @@ const Menu = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
@@ -40,6 +45,12 @@ const Menu = () => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => setSearch(searchInput), 250);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
 
   const fetchData = async () => {
     try {
@@ -73,9 +84,18 @@ const Menu = () => {
     }
   };
 
-  const filteredItems = activeCategory === "all"
-    ? menuItems 
-    : menuItems.filter(item => item.category_id === activeCategory);
+  const filteredItems = (activeCategory === "all"
+    ? menuItems
+    : menuItems.filter(item => item.category_id === activeCategory)
+  ).filter(item => {
+    const q = search.toLowerCase();
+    const cat = categories.find(c => c.id === item.category_id)?.name?.toLowerCase() || "";
+    return (
+      item.name.toLowerCase().includes(q) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      cat.includes(q)
+    );
+  });
 
   const allCategories = [
     { id: "all", name: "All Items" },
@@ -112,19 +132,52 @@ const Menu = () => {
       {/* Menu Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
-            {allCategories.map((category) => (
-              <Button
-                key={category.id}
-                variant={activeCategory === category.id ? "hero" : "elegant"}
-                size="sm"
-                onClick={() => setActiveCategory(category.id)}
-                className="transition-all duration-300"
-              >
-                {category.name}
-              </Button>
-            ))}
+          {/* Category Filter & Search */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-12">
+            <div className="flex flex-wrap gap-2">
+              {allCategories.map((category) => (
+                <Button
+                  key={category.id}
+                  variant={activeCategory === category.id ? "hero" : "elegant"}
+                  size="sm"
+                  onClick={() => setActiveCategory(category.id)}
+                  className="transition-all duration-300"
+                >
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+            <div className="relative w-full md:w-64">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                placeholder="Search by name, description, or category..."
+                className="border border-gray-300 rounded pl-9 pr-8 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-thai-gold"
+                onKeyDown={e => {
+                  if (e.key === 'Escape') setSearchInput("");
+                  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+                    e.preventDefault();
+                    (e.target as HTMLInputElement).select();
+                  }
+                }}
+                aria-label="Search menu items"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  onClick={() => setSearchInput("")}
+                  tabIndex={0}
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Menu Items Grid */}
@@ -142,7 +195,6 @@ const Menu = () => {
                     className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-thai-charcoal/20 group-hover:bg-thai-charcoal/10 transition-colors duration-300" />
-                  {/* Like Button removed */}
                 </div>
 
                 <CardContent className="p-6">
@@ -159,9 +211,27 @@ const Menu = () => {
                     {item.description || "Delicious Thai dish prepared with authentic ingredients"}
                   </p>
 
-                  <div className="flex gap-2 mb-2">
-                    {item.is_gluten_free && <Badge variant="outline">Gluten Free</Badge>}
-                    {item.is_vegan && <Badge variant="outline">Vegan</Badge>}
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {item.is_gluten_free && (
+                      <Badge variant="outline" className="whitespace-nowrap bg-green-50 text-green-800 border-green-300 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
+                        Can be Ordered Gluten Free
+                      </Badge>
+                    )}
+                    {item.is_vegan && (
+                      <Badge variant="outline" className="whitespace-nowrap bg-emerald-50 text-emerald-800 border-emerald-300 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
+                        Can be Ordered Vegan
+                      </Badge>
+                    )}
+                    {item.is_spicy && (
+                      <Badge variant="outline" className="whitespace-nowrap bg-red-50 text-red-800 border-red-300 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
+                        Can be Ordered Spicy
+                      </Badge>
+                    )}
+                    {item.is_vegetarian && (
+                      <Badge variant="outline" className="whitespace-nowrap bg-yellow-50 text-yellow-800 border-yellow-300 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
+                        Can be Ordered Vegetarian
+                      </Badge>
+                    )}
                   </div>
                 </CardContent>
               </Card>

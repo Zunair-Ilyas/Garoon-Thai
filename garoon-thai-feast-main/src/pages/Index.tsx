@@ -6,9 +6,9 @@ import Layout from "@/components/Layout";
 import { Star, Clock, Users, Award, ArrowRight, Utensils, Heart, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 // import heroImage from "@/assets/hero-thai-dishes.jpg";
-import main_photo from '../../public/main_photo.jpg'
+import main_photo from '/main_photo.jpg'
 // import restaurantInterior from "@/assets/restaurant-interior.jpg";
-import gong_on_fire from '../../public/gong_on_fire.jpg'
+import gong_on_fire from '/gong_on_fire.jpg'
 
 interface Testimonial {
   id: string;
