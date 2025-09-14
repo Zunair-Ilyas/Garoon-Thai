@@ -8,6 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import React from "react";
 import { Search, X } from "lucide-react";
+import glutenFreeIcon from "@/assets/gluten_free.png";
+import veganIcon from "@/assets/vegan.png";
+import vegetarianIcon from "@/assets/vegetarian.png";
+import spicyIcon from "@/assets/spicy.png";
 
 interface Category {
   id: string;
@@ -213,23 +217,127 @@ const Menu = () => {
 
                   <div className="flex flex-wrap gap-2 mb-2">
                     {item.is_gluten_free && (
-                      <Badge variant="outline" className="whitespace-nowrap bg-green-50 text-green-800 border-green-300 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
-                        Can be Ordered Gluten Free
+                      <Badge variant="outline" className="bg-white border-green-300 rounded-full px-2 py-1 flex items-center relative icon-badge" tabIndex={0}>
+                        <span className="relative flex items-center">
+                          <img
+                            src={glutenFreeIcon}
+                            alt="Gluten Free"
+                            className="h-5 w-5 cursor-pointer"
+                            onMouseEnter={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.remove('hidden');
+                            }}
+                            onMouseLeave={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.add('hidden');
+                            }}
+                            onFocus={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.remove('hidden');
+                            }}
+                            onBlur={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.add('hidden');
+                            }}
+                            tabIndex={0}
+                          />
+                          <span className="icon-tooltip hidden pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900 text-xs font-bold rounded-lg px-3 py-1 shadow-lg border border-yellow-400 transition-all duration-200 opacity-95 whitespace-nowrap animate-fade-in">
+                            Gluten Free
+                          </span>
+                        </span>
                       </Badge>
                     )}
                     {item.is_vegan && (
-                      <Badge variant="outline" className="whitespace-nowrap bg-emerald-50 text-emerald-800 border-emerald-300 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
-                        Can be Ordered Vegan
+                      <Badge variant="outline" className="bg-white border-emerald-300 rounded-full px-2 py-1 flex items-center relative icon-badge" tabIndex={0}>
+                        <span className="relative flex items-center">
+                          <img
+                            src={veganIcon}
+                            alt="Vegan"
+                            className="h-5 w-5 cursor-pointer"
+                            onMouseEnter={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.remove('hidden');
+                            }}
+                            onMouseLeave={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.add('hidden');
+                            }}
+                            onFocus={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.remove('hidden');
+                            }}
+                            onBlur={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.add('hidden');
+                            }}
+                            tabIndex={0}
+                          />
+                          <span className="icon-tooltip hidden pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white text-xs font-semibold rounded-lg px-3 py-1 shadow-lg border border-emerald-500 transition-all duration-200 opacity-95 whitespace-nowrap animate-fade-in">
+                            Vegan
+                          </span>
+                        </span>
                       </Badge>
                     )}
                     {item.is_spicy && (
-                      <Badge variant="outline" className="whitespace-nowrap bg-red-50 text-red-800 border-red-300 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
-                        Can be Ordered Spicy
+                      <Badge variant="outline" className="bg-white border-red-300 rounded-full px-2 py-1 flex items-center relative icon-badge" tabIndex={0}>
+                        <span className="relative flex items-center">
+                          <img
+                            src={spicyIcon}
+                            alt="Spicy"
+                            className="h-5 w-5 cursor-pointer"
+                            onMouseEnter={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.remove('hidden');
+                            }}
+                            onMouseLeave={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.add('hidden');
+                            }}
+                            onFocus={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.remove('hidden');
+                            }}
+                            onBlur={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.add('hidden');
+                            }}
+                            tabIndex={0}
+                          />
+                          <span className="icon-tooltip hidden pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 bg-gradient-to-br from-red-400 to-red-600 text-white text-xs font-semibold rounded-lg px-3 py-1 shadow-lg border border-red-500 transition-all duration-200 opacity-95 whitespace-nowrap animate-fade-in">
+                            Spicy
+                          </span>
+                        </span>
                       </Badge>
                     )}
                     {item.is_vegetarian && (
-                      <Badge variant="outline" className="whitespace-nowrap bg-yellow-50 text-yellow-800 border-yellow-300 rounded-full px-3 py-1 text-xs font-semibold shadow-sm">
-                        Can be Ordered Vegetarian
+                      <Badge variant="outline" className="bg-white border-yellow-300 rounded-full px-2 py-1 flex items-center relative icon-badge" tabIndex={0}>
+                        <span className="relative flex items-center">
+                          <img
+                            src={vegetarianIcon}
+                            alt="Vegetarian"
+                            className="h-5 w-5 cursor-pointer"
+                            onMouseEnter={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.remove('hidden');
+                            }}
+                            onMouseLeave={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.add('hidden');
+                            }}
+                            onFocus={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.remove('hidden');
+                            }}
+                            onBlur={e => {
+                              const tooltip = e.currentTarget.nextElementSibling;
+                              if (tooltip) tooltip.classList.add('hidden');
+                            }}
+                            tabIndex={0}
+                          />
+                          <span className="icon-tooltip hidden pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-xs font-semibold rounded-lg px-3 py-1 shadow-lg border border-yellow-500 transition-all duration-200 opacity-95 whitespace-nowrap animate-fade-in">
+                            Vegetarian
+                          </span>
+                        </span>
                       </Badge>
                     )}
                   </div>

@@ -189,7 +189,7 @@ const Index = () => {
                 </Link>
               </Button>
               <Button variant="elegant" size="xl">
-                <a href="https://www.order.store/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw ">Order for Delivery</a>
+                <a href="https://www.ubereats.com/store/easygo-thai-restaurant-and-takeaways/KpMs6bO6RsCV6m8RKZRVHw?diningMode=DELIVERY&pl=JTdCJTIyYWRkcmVzcyUyMiUzQSUyMjQ5MyUyMEhhbXB0b24lMjBTdCUyMiUyQyUyMnJlZmVyZW5jZSUyMiUzQSUyMkNoSUpNWXRESXlkdjFtb1JKbW83YWJiLTExdyUyMiUyQyUyMnJlZmVyZW5jZVR5cGUlMjIlM0ElMjJnb29nbGVfcGxhY2VzJTIyJTJDJTIybGF0aXR1ZGUlMjIlM0EtMzcuOTMyNjE3MyUyQyUyMmxvbmdpdHVkZSUyMiUzQTE0NS4wMDMxMTc1JTdE">Order for Delivery</a>
               </Button>
               <Button variant="accent" size="xl">
                 <a href="https://www.foodbooking.com/ordering/restaurant/menu?restaurant_uid=84a846e1-57d7-448b-be3b-bdb68a484d17">Order for Pickup</a>

@@ -113,6 +113,7 @@ const MenuManager = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const { toast } = useToast();
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<MenuItemFormData>({
@@ -344,16 +345,56 @@ const MenuManager = () => {
     );
   });
 
+  // Group menu items by category
+  const menuItemsByCategory = categories.map(category => ({
+    ...category,
+    items: filteredMenuItems.filter(item => item.category_id === category.id)
+  }));
+  const uncategorizedItems = filteredMenuItems.filter(item => !item.category_id);
+
+  // Filtered categories for display
+  const displayedCategories = selectedCategoryId === "all"
+    ? menuItemsByCategory
+    : menuItemsByCategory.filter(cat => cat.id === selectedCategoryId);
+  const showUncategorized = selectedCategoryId === "all" || selectedCategoryId === "uncategorized";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <h2 className="font-playfair text-2xl font-bold text-foreground">Menu Management</h2>
+        {/* Category Filter Dropdown */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button
+            variant={selectedCategoryId === "all" ? "hero" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategoryId("all")}
+          >
+            All Categories
+          </Button>
+          <Button
+            variant={selectedCategoryId === "uncategorized" ? "hero" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategoryId("uncategorized")}
+          >
+            Uncategorized
+          </Button>
+          {categories.map(category => (
+            <Button
+              key={category.id}
+              variant={selectedCategoryId === category.id ? "hero" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategoryId(category.id)}
+            >
+              {category.name}
+            </Button>
+          ))}
+        </div>
         <div className="relative w-full md:w-80">
           <Input
             type="text"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            placeholder="🔍 Search by name, description, or category..."
+            placeholder="Search by name, description, or category..."
             className="pl-10 pr-10 py-2 text-sm border border-thai-gold/60 focus:border-thai-gold focus:ring-2 focus:ring-thai-gold rounded-full shadow-sm transition-all duration-200 bg-white/80"
             onKeyDown={e => {
               if (e.key === 'Escape') setSearchInput("");
@@ -544,91 +585,172 @@ const MenuManager = () => {
         </Dialog>
       </div>
 
-      <Card className="card-elegant border-thai-gold/20">
-        <CardHeader>
-          <CardTitle>Menu Items ({menuItems.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>GF</TableHead>
-                <TableHead>Vegan</TableHead>
-                <TableHead>Spicy</TableHead>
-                <TableHead>Vegetarian</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredMenuItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{item.name}</div>
-                      {item.description && (
-                        <div className="text-sm text-muted-foreground truncate max-w-xs">
-                          {item.description}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>${item.price.toFixed(2)}</TableCell>
-                  <TableCell>
-                    {categories.find(c => c.id === item.category_id)?.name || "Uncategorized"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={item.is_active ? "default" : "secondary"} className="flex items-center gap-1">
-                      {item.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                      {item.is_active ? "Active" : "Hidden"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {item.is_gluten_free ? <Badge variant="outline">GF</Badge> : null}
-                  </TableCell>
-                  <TableCell>
-                    {item.is_vegan ? <Badge variant="outline">Vegan</Badge> : null}
-                  </TableCell>
-                  <TableCell>
-                    {item.is_spicy ? <Badge variant="outline">Spicy</Badge> : null}
-                  </TableCell>
-                  <TableCell>
-                    {item.is_vegetarian ? <Badge variant="outline">Vegetarian</Badge> : null}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(item.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+      {/* Show uncategorized first if any and if selected */}
+      {showUncategorized && uncategorizedItems.length > 0 && (
+        <Card className="card-elegant border-thai-gold/20 mb-8">
+          <CardHeader>
+            <CardTitle>Uncategorized Items ({uncategorizedItems.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>GF</TableHead>
+                  <TableHead>Vegan</TableHead>
+                  <TableHead>Spicy</TableHead>
+                  <TableHead>Vegetarian</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {menuItems.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              No menu items found. Create your first menu item to get started.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {uncategorizedItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{item.name}</div>
+                        {item.description && (
+                          <div className="text-sm text-muted-foreground truncate max-w-xs">
+                            {item.description}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>${item.price.toFixed(2)}</TableCell>
+                    <TableCell>Uncategorized</TableCell>
+                    <TableCell>
+                      <Badge variant={item.is_active ? "default" : "secondary"} className="flex items-center gap-1">
+                        {item.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        {item.is_active ? "Active" : "Hidden"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {item.is_gluten_free ? <Badge variant="outline">GF</Badge> : null}
+                    </TableCell>
+                    <TableCell>
+                      {item.is_vegan ? <Badge variant="outline">Vegan</Badge> : null}
+                    </TableCell>
+                    <TableCell>
+                      {item.is_spicy ? <Badge variant="outline">Spicy</Badge> : null}
+                    </TableCell>
+                    <TableCell>
+                      {item.is_vegetarian ? <Badge variant="outline">Vegetarian</Badge> : null}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(item.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Render each category and its items */}
+      {displayedCategories.map(category => (
+        <Card className="card-elegant border-thai-gold/20 mb-8" key={category.id}>
+          <CardHeader>
+            <CardTitle>{category.name} ({category.items.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>GF</TableHead>
+                  <TableHead>Vegan</TableHead>
+                  <TableHead>Spicy</TableHead>
+                  <TableHead>Vegetarian</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {category.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{item.name}</div>
+                        {item.description && (
+                          <div className="text-sm text-muted-foreground truncate max-w-xs">
+                            {item.description}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>${item.price.toFixed(2)}</TableCell>
+                    <TableCell>{category.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={item.is_active ? "default" : "secondary"} className="flex items-center gap-1">
+                        {item.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        {item.is_active ? "Active" : "Hidden"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {item.is_gluten_free ? <Badge variant="outline">GF</Badge> : null}
+                    </TableCell>
+                    <TableCell>
+                      {item.is_vegan ? <Badge variant="outline">Vegan</Badge> : null}
+                    </TableCell>
+                    <TableCell>
+                      {item.is_spicy ? <Badge variant="outline">Spicy</Badge> : null}
+                    </TableCell>
+                    <TableCell>
+                      {item.is_vegetarian ? <Badge variant="outline">Vegetarian</Badge> : null}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(item.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {category.items.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No menu items in this category.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };
