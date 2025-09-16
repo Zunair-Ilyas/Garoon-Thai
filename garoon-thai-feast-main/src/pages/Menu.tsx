@@ -357,8 +357,8 @@ const Menu = () => {
           {/* Menu Note */}
           <div className="text-center mt-12 p-6 bg-thai-beige-light/30 rounded-lg">
             <p className="text-muted-foreground">
-              <strong>Note:</strong> Most dishes can be prepared vegetarian or vegan upon request. 
-              Please inform our staff of any allergies or dietary restrictions.
+              <strong>Note:</strong> Most dishes can be prepared vegetarian or vegan upon request. Please inform our staff of any allergies or dietary restrictions.
+
             </p>
           </div>
         </div>

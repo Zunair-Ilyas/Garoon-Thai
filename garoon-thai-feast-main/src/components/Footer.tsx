@@ -125,6 +125,12 @@ const Footer = () => {
 
   return (
     <footer className="bg-thai-charcoal text-thai-beige-light">
+      {/* Tagline at the top */}
+      <div className="container mx-auto px-4 pt-8 pb-2">
+        <h2 className="text-3xl md:text-4xl font-playfair font-bold text-thai-gold text-center drop-shadow-lg tracking-wide">
+          Savour the Flavour
+        </h2>
+      </div>
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand & Description */}
