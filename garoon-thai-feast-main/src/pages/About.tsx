@@ -10,6 +10,7 @@ import restaurantInterior from "@/assets/restaurant-interior.jpg";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import mai_and_gong from '../assets/mai_and_gong.jpg'
 
 const About = () => {
   const values = [
@@ -206,7 +207,7 @@ const About = () => {
             </div>
             <div className="animate-scale-in">
               <img 
-                src={restaurantInterior} 
+                src={mai_and_gong}
                 alt="Garoon Thai Restaurant Interior" 
                 className="rounded-lg shadow-elegant w-full h-auto"
               />
