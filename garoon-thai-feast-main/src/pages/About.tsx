@@ -136,7 +136,8 @@ const About = () => {
     setSendingMessage(true);
     try {
       const { error: dbError } = await supabase
-        .from('contact_messages')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- temporary until contact_messages is added to generated Supabase types
+        .from('contact_messages' as any) // cast to any until types include this table
         .insert([
           {
             name,
@@ -341,14 +342,28 @@ const About = () => {
                   <Phone className="h-6 w-6 text-thai-gold mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Phone</h3>
-                    <p className="text-muted-foreground">{loadingContactInfo ? "Loading..." : contactInfo.phone || <span className="italic">Not available</span>}</p>
+                    <p className="text-muted-foreground">{loadingContactInfo ? "Loading..." : contactInfo.phone ? (
+                      <a
+                        href={`tel:${contactInfo.phone.replace(/[^+\d]/g, '')}`}
+                        className="hover:underline text-thai-gold focus:outline-none focus:ring-2 focus:ring-thai-gold/50"
+                      >
+                        {contactInfo.phone}
+                      </a>
+                    ) : <span className="italic">Not available</span>}</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
                   <Mail className="h-6 w-6 text-thai-gold mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Email</h3>
-                    <p className="text-muted-foreground">{loadingContactInfo ? "Loading..." : contactInfo.email || <span className="italic">Not available</span>}</p>
+                    <p className="text-muted-foreground">{loadingContactInfo ? "Loading..." : contactInfo.email ? (
+                      <a
+                        href={`mailto:${contactInfo.email.trim()}`}
+                        className="hover:underline text-thai-gold focus:outline-none focus:ring-2 focus:ring-thai-gold/50"
+                      >
+                        {contactInfo.email}
+                      </a>
+                    ) : <span className="italic">Not available</span>}</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
