@@ -249,74 +249,74 @@ const About = () => {
       </section>
 
       {/* Chef Section */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-scale-in">
-              <img 
-                src={chefPortrait} 
-                alt="Chef Somchai - Head Chef at Garoon Thai" 
-                className="rounded-lg shadow-elegant w-full h-auto"
-              />
-            </div>
-            <div className="animate-fade-in-up">
-              <h2 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-6">
-                Meet Chef <span className="text-thai-gold">Somchai</span>
-              </h2>
-              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                Chef Somchai brings over 30 years of culinary expertise to Garoon Thai. Born and raised 
-                in Bangkok, he learned the art of Thai cooking from his grandmother, who ran a small 
-                street food stall in the bustling markets of Thailand.
-              </p>
-              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                His passion for authentic flavors and dedication to traditional cooking methods has earned 
-                him recognition throughout the culinary community. Chef Somchai personally oversees every 
-                dish that leaves our kitchen, ensuring it meets the highest standards of taste and presentation.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <div className="bg-thai-gold/10 px-4 py-2 rounded-lg">
-                  <span className="text-thai-gold font-semibold">30+ Years Experience</span>
-                </div>
-                <div className="bg-thai-red/10 px-4 py-2 rounded-lg">
-                  <span className="text-thai-red font-semibold">Bangkok Native</span>
-                </div>
-                <div className="bg-thai-green/10 px-4 py-2 rounded-lg">
-                  <span className="text-thai-green font-semibold">Award Winner</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/*<section className="py-20 bg-background">*/}
+      {/*  <div className="container mx-auto px-4">*/}
+      {/*    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">*/}
+      {/*      <div className="animate-scale-in">*/}
+      {/*        <img */}
+      {/*          src={chefPortrait} */}
+      {/*          alt="Chef Somchai - Head Chef at Garoon Thai" */}
+      {/*          className="rounded-lg shadow-elegant w-full h-auto"*/}
+      {/*        />*/}
+      {/*      </div>*/}
+      {/*      <div className="animate-fade-in-up">*/}
+      {/*        <h2 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-6">*/}
+      {/*          Meet Chef <span className="text-thai-gold">Somchai</span>*/}
+      {/*        </h2>*/}
+      {/*        <p className="text-lg text-muted-foreground mb-6 leading-relaxed">*/}
+      {/*          Chef Somchai brings over 30 years of culinary expertise to Garoon Thai. Born and raised */}
+      {/*          in Bangkok, he learned the art of Thai cooking from his grandmother, who ran a small */}
+      {/*          street food stall in the bustling markets of Thailand.*/}
+      {/*        </p>*/}
+      {/*        <p className="text-lg text-muted-foreground mb-6 leading-relaxed">*/}
+      {/*          His passion for authentic flavors and dedication to traditional cooking methods has earned */}
+      {/*          him recognition throughout the culinary community. Chef Somchai personally oversees every */}
+      {/*          dish that leaves our kitchen, ensuring it meets the highest standards of taste and presentation.*/}
+      {/*        </p>*/}
+      {/*        <div className="flex flex-wrap gap-4">*/}
+      {/*          <div className="bg-thai-gold/10 px-4 py-2 rounded-lg">*/}
+      {/*            <span className="text-thai-gold font-semibold">30+ Years Experience</span>*/}
+      {/*          </div>*/}
+      {/*          <div className="bg-thai-red/10 px-4 py-2 rounded-lg">*/}
+      {/*            <span className="text-thai-red font-semibold">Bangkok Native</span>*/}
+      {/*          </div>*/}
+      {/*          <div className="bg-thai-green/10 px-4 py-2 rounded-lg">*/}
+      {/*            <span className="text-thai-green font-semibold">Award Winner</span>*/}
+      {/*          </div>*/}
+      {/*        </div>*/}
+      {/*      </div>*/}
+      {/*    </div>*/}
+      {/*  </div>*/}
+      {/*</section>*/}
 
       {/* Timeline Section */}
-      <section className="py-20 bg-thai-charcoal">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16 animate-fade-in-up">
-            <h2 className="font-playfair text-4xl md:text-5xl font-bold text-thai-gold mb-4">
-              Our Timeline
-            </h2>
-            <p className="text-lg text-thai-beige-light max-w-2xl mx-auto">
-              25 years of growth, tradition, and community
-            </p>
-          </div>
+      {/*<section className="py-20 bg-thai-charcoal">*/}
+      {/*  <div className="container mx-auto px-4">*/}
+      {/*    <div className="text-center mb-16 animate-fade-in-up">*/}
+      {/*      <h2 className="font-playfair text-4xl md:text-5xl font-bold text-thai-gold mb-4">*/}
+      {/*        Our Timeline*/}
+      {/*      </h2>*/}
+      {/*      <p className="text-lg text-thai-beige-light max-w-2xl mx-auto">*/}
+      {/*        25 years of growth, tradition, and community*/}
+      {/*      </p>*/}
+      {/*    </div>*/}
 
-          <div className="max-w-4xl mx-auto">
-            {timeline.map((item, index) => (
-              <div key={index} className="flex items-center mb-8 animate-fade-in-up" style={{ animationDelay: `${index * 0.2}s` }}>
-                <div className="flex-shrink-0 w-24 text-right mr-8">
-                  <span className="text-2xl font-bold text-thai-gold">{item.year}</span>
-                </div>
-                <div className="flex-shrink-0 w-4 h-4 bg-thai-gold rounded-full mr-8"></div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-thai-beige-light mb-2">{item.title}</h3>
-                  <p className="text-thai-beige-dark">{item.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/*    <div className="max-w-4xl mx-auto">*/}
+      {/*      {timeline.map((item, index) => (*/}
+      {/*        <div key={index} className="flex items-center mb-8 animate-fade-in-up" style={{ animationDelay: `${index * 0.2}s` }}>*/}
+      {/*          <div className="flex-shrink-0 w-24 text-right mr-8">*/}
+      {/*            <span className="text-2xl font-bold text-thai-gold">{item.year}</span>*/}
+      {/*          </div>*/}
+      {/*          <div className="flex-shrink-0 w-4 h-4 bg-thai-gold rounded-full mr-8"></div>*/}
+      {/*          <div className="flex-1">*/}
+      {/*            <h3 className="text-xl font-semibold text-thai-beige-light mb-2">{item.title}</h3>*/}
+      {/*            <p className="text-thai-beige-dark">{item.description}</p>*/}
+      {/*          </div>*/}
+      {/*        </div>*/}
+      {/*      ))}*/}
+      {/*    </div>*/}
+      {/*  </div>*/}
+      {/*</section>*/}
 
       {/* Contact Section */}
       <section className="py-20 bg-background">
@@ -367,40 +367,40 @@ const About = () => {
               </div>
             </div>
             {/* Contact Form */}
-            <Card className="card-elegant border-thai-gold/20 animate-scale-in">
-              <CardContent className="p-8">
-                <h3 className="font-playfair text-2xl font-semibold text-foreground mb-6">
-                  Send us a Message
-                </h3>
-                <form className="space-y-4" onSubmit={handleContactSubmit}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="first-name">First Name</Label>
-                      <Input id="first-name" placeholder="Your first name" value={contactForm.firstName} onChange={e => setContactForm(f => ({ ...f, firstName: e.target.value }))} />
-                    </div>
-                    <div>
-                      <Label htmlFor="last-name">Last Name</Label>
-                      <Input id="last-name" placeholder="Your last name" value={contactForm.lastName} onChange={e => setContactForm(f => ({ ...f, lastName: e.target.value }))} />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="your.email@example.com" value={contactForm.email} onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))} />
-                  </div>
-                  <div>
-                    <Label htmlFor="subject">Subject</Label>
-                    <Input id="subject" placeholder="What's this about?" value={contactForm.subject} onChange={e => setContactForm(f => ({ ...f, subject: e.target.value }))} />
-                  </div>
-                  <div>
-                    <Label htmlFor="message">Message</Label>
-                    <Textarea id="message" placeholder="Tell us how we can help you..." rows={4} value={contactForm.message} onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))} />
-                  </div>
-                  <Button variant="hero" size="lg" className="w-full" type="submit" disabled={sendingMessage}>
-                    {sendingMessage ? "Sending..." : "Send Message"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+            {/*<Card className="card-elegant border-thai-gold/20 animate-scale-in">*/}
+            {/*  <CardContent className="p-8">*/}
+            {/*    <h3 className="font-playfair text-2xl font-semibold text-foreground mb-6">*/}
+            {/*      Send us a Message*/}
+            {/*    </h3>*/}
+            {/*    <form className="space-y-4" onSubmit={handleContactSubmit}>*/}
+            {/*      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">*/}
+            {/*        <div>*/}
+            {/*          <Label htmlFor="first-name">First Name</Label>*/}
+            {/*          <Input id="first-name" placeholder="Your first name" value={contactForm.firstName} onChange={e => setContactForm(f => ({ ...f, firstName: e.target.value }))} />*/}
+            {/*        </div>*/}
+            {/*        <div>*/}
+            {/*          <Label htmlFor="last-name">Last Name</Label>*/}
+            {/*          <Input id="last-name" placeholder="Your last name" value={contactForm.lastName} onChange={e => setContactForm(f => ({ ...f, lastName: e.target.value }))} />*/}
+            {/*        </div>*/}
+            {/*      </div>*/}
+            {/*      <div>*/}
+            {/*        <Label htmlFor="email">Email</Label>*/}
+            {/*        <Input id="email" type="email" placeholder="your.email@example.com" value={contactForm.email} onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))} />*/}
+            {/*      </div>*/}
+            {/*      <div>*/}
+            {/*        <Label htmlFor="subject">Subject</Label>*/}
+            {/*        <Input id="subject" placeholder="What's this about?" value={contactForm.subject} onChange={e => setContactForm(f => ({ ...f, subject: e.target.value }))} />*/}
+            {/*      </div>*/}
+            {/*      <div>*/}
+            {/*        <Label htmlFor="message">Message</Label>*/}
+            {/*        <Textarea id="message" placeholder="Tell us how we can help you..." rows={4} value={contactForm.message} onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))} />*/}
+            {/*      </div>*/}
+            {/*      <Button variant="hero" size="lg" className="w-full" type="submit" disabled={sendingMessage}>*/}
+            {/*        {sendingMessage ? "Sending..." : "Send Message"}*/}
+            {/*      </Button>*/}
+            {/*    </form>*/}
+            {/*  </CardContent>*/}
+            {/*</Card>*/}
           </div>
         </div>
       </section>

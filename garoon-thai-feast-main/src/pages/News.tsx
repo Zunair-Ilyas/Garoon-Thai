@@ -435,94 +435,94 @@ const News = () => {
       </section>
 
       {/* Contact Form */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center mb-12">
-            <h2 className="font-playfair text-4xl font-bold text-foreground mb-4">
-              Get in Touch
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Have a question or want to share feedback? We'd love to hear from you!
-            </p>
-          </div>
+      {/*<section className="py-16 bg-background">*/}
+      {/*  <div className="container mx-auto px-4">*/}
+      {/*    <div className="max-w-2xl mx-auto text-center mb-12">*/}
+      {/*      <h2 className="font-playfair text-4xl font-bold text-foreground mb-4">*/}
+      {/*        Get in Touch*/}
+      {/*      </h2>*/}
+      {/*      <p className="text-lg text-muted-foreground">*/}
+      {/*        Have a question or want to share feedback? We'd love to hear from you!*/}
+      {/*      </p>*/}
+      {/*    </div>*/}
 
-          <div className="max-w-2xl mx-auto">
-            <form onSubmit={handleContactSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={contactForm.name}
-                    onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
-                    className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"
-                    placeholder="Your full name"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="contact-email" className="block text-sm font-medium text-foreground mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    id="contact-email"
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
-                    className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"
-                    placeholder="your.email@example.com"
-                    required
-                  />
-                </div>
-              </div>
+      {/*    <div className="max-w-2xl mx-auto">*/}
+      {/*      <form onSubmit={handleContactSubmit} className="space-y-6">*/}
+      {/*        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">*/}
+      {/*          <div>*/}
+      {/*            <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">*/}
+      {/*              Name **/}
+      {/*            </label>*/}
+      {/*            <input*/}
+      {/*              type="text"*/}
+      {/*              id="name"*/}
+      {/*              value={contactForm.name}*/}
+      {/*              onChange={(e) => setContactForm({...contactForm, name: e.target.value})}*/}
+      {/*              className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"*/}
+      {/*              placeholder="Your full name"*/}
+      {/*              required*/}
+      {/*            />*/}
+      {/*          </div>*/}
+      {/*          <div>*/}
+      {/*            <label htmlFor="contact-email" className="block text-sm font-medium text-foreground mb-2">*/}
+      {/*              Email **/}
+      {/*            </label>*/}
+      {/*            <input*/}
+      {/*              type="email"*/}
+      {/*              id="contact-email"*/}
+      {/*              value={contactForm.email}*/}
+      {/*              onChange={(e) => setContactForm({...contactForm, email: e.target.value})}*/}
+      {/*              className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"*/}
+      {/*              placeholder="your.email@example.com"*/}
+      {/*              required*/}
+      {/*            />*/}
+      {/*          </div>*/}
+      {/*        </div>*/}
 
-              <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  id="subject"
-                  value={contactForm.subject}
-                  onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
-                  className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"
-                  placeholder="What's this about?"
-                />
-              </div>
+      {/*        <div>*/}
+      {/*          <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">*/}
+      {/*            Subject*/}
+      {/*          </label>*/}
+      {/*          <input*/}
+      {/*            type="text"*/}
+      {/*            id="subject"*/}
+      {/*            value={contactForm.subject}*/}
+      {/*            onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}*/}
+      {/*            className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold"*/}
+      {/*            placeholder="What's this about?"*/}
+      {/*          />*/}
+      {/*        </div>*/}
 
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
-                  Message *
-                </label>
-                <textarea
-                  id="message"
-                  value={contactForm.message}
-                  onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
-                  rows={6}
-                  className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold resize-none"
-                  placeholder="Tell us what's on your mind..."
-                  required
-                />
-              </div>
+      {/*        <div>*/}
+      {/*          <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">*/}
+      {/*            Message **/}
+      {/*          </label>*/}
+      {/*          <textarea*/}
+      {/*            id="message"*/}
+      {/*            value={contactForm.message}*/}
+      {/*            onChange={(e) => setContactForm({...contactForm, message: e.target.value})}*/}
+      {/*            rows={6}*/}
+      {/*            className="w-full px-4 py-3 rounded-lg border border-thai-gold/20 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-thai-gold resize-none"*/}
+      {/*            placeholder="Tell us what's on your mind..."*/}
+      {/*            required*/}
+      {/*          />*/}
+      {/*        </div>*/}
 
-              <div className="text-center">
-                <Button
-                  type="submit"
-                  variant="hero"
-                  size="lg"
-                  disabled={sendingMessage}
-                  className="px-8"
-                >
-                  {sendingMessage ? "Sending..." : "Send Message"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
+      {/*        <div className="text-center">*/}
+      {/*          <Button*/}
+      {/*            type="submit"*/}
+      {/*            variant="hero"*/}
+      {/*            size="lg"*/}
+      {/*            disabled={sendingMessage}*/}
+      {/*            className="px-8"*/}
+      {/*          >*/}
+      {/*            {sendingMessage ? "Sending..." : "Send Message"}*/}
+      {/*          </Button>*/}
+      {/*        </div>*/}
+      {/*      </form>*/}
+      {/*    </div>*/}
+      {/*  </div>*/}
+      {/*</section>*/}
     </Layout>
   );
 };
