@@ -14,6 +14,7 @@ import { Plus, Edit, Trash2, Eye, Calendar, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { articlesService } from "@/lib/dataService";
 
 const articleSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -67,12 +68,7 @@ const ArticleManager = () => {
 
   const fetchArticles = async () => {
     try {
-      const { data, error } = await supabase
-        .from('articles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await articlesService.getAllArticles();
       setArticles(data || []);
     } catch (error) {
       console.error('Error fetching articles:', error);
@@ -172,6 +168,7 @@ const ArticleManager = () => {
       reset({
         status: "draft"
       });
+      articlesService.invalidateCache(); // Invalidate articles cache
       await fetchArticles();
     } catch (error) {
       console.error('Error saving article:', error);
@@ -214,6 +211,7 @@ const ArticleManager = () => {
           title: "Success",
           description: "Article deleted successfully",
         });
+        articlesService.invalidateCache(); // Invalidate articles cache
         fetchArticles();
       } catch (error) {
         console.error('Error deleting article:', error);

@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Users, 
@@ -27,6 +26,7 @@ import NewsletterSubscriberManager from "@/components/admin/NewsletterSubscriber
 import SEOManager from "@/components/admin/SEOManager";
 import UserManager from "@/components/admin/UserManager";
 import CategoryManager from "@/components/admin/CategoryManager";
+import { statsService } from "@/lib/dataService";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -39,36 +39,6 @@ const Dashboard = () => {
     profiles: 0
   });
 
-  // Update stats with real-time data from localStorage
-  useEffect(() => {
-    const updateStats = () => {
-      try {
-        // Get newsletter subscribers count
-        const subscribers = JSON.parse(localStorage.getItem('newsletter_subscriptions') || '[]');
-        const activeSubscribers = subscribers.filter((sub: any) => sub.is_subscribed).length;
-        
-        // Get contact messages count
-        const messages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-        const pendingMessages = messages.filter((msg: any) => msg.status === 'pending').length;
-        
-        setStats(prev => ({
-          ...prev,
-          subscribers: activeSubscribers,
-          // You can add more real-time stats here
-        }));
-      } catch (error) {
-        console.error('Error updating stats:', error);
-      }
-    };
-
-    // Update stats immediately
-    updateStats();
-    
-    // Update stats every 5 seconds
-    const interval = setInterval(updateStats, 5000);
-    
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     fetchStats();
@@ -76,19 +46,8 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const [menuItems, articles, subscribers, profiles] = await Promise.all([
-        supabase.from('menu_items').select('*', { count: 'exact', head: true }),
-        supabase.from('articles').select('*', { count: 'exact', head: true }),
-        supabase.from('member_subscriptions').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true })
-      ]);
-
-      setStats({
-        menuItems: menuItems.count || 0,
-        articles: articles.count || 0,
-        subscribers: subscribers.count || 0,
-        profiles: profiles.count || 0
-      });
+      const data = await statsService.getStats();
+      setStats(data);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }

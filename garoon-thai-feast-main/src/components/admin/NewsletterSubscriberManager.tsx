@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Trash2, Download, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { newsletterService } from "@/lib/dataService";
 
 interface NewsletterSubscriber {
   email: string;
@@ -25,28 +26,8 @@ const NewsletterSubscriberManager = () => {
   const loadSubscribers = async () => {
     try {
       setLoading(true);
-      
-      // Load from database
-      const { data: dbSubscribers, error: dbError } = await supabase
-        .from('member_subscriptions')
-        .select('*')
-        .eq('is_subscribed', true)
-        .order('subscribed_at', { ascending: false });
-
-      if (dbError) {
-        console.error('Database fetch failed:', dbError);
-        toast({
-          title: "Error",
-          description: "Failed to load newsletter subscribers",
-          variant: "destructive",
-        });
-        setSubscribers([]);
-      } else {
-        console.log('Database subscribers:', dbSubscribers);
-        setSubscribers(dbSubscribers || []);
-      }
-      
-      console.log('Total subscribers loaded:', subscribers.length);
+      const data = await newsletterService.getSubscribers();
+      setSubscribers(data || []);
     } catch (error) {
       console.error('Error loading subscribers:', error);
       setSubscribers([]);
@@ -82,6 +63,8 @@ const NewsletterSubscriberManager = () => {
       const updatedSubscribers = subscribers.filter(sub => sub.email !== subscriber.email);
       setSubscribers(updatedSubscribers);
       
+      newsletterService.invalidateCache(); // Invalidate newsletter cache
+
       toast({
         title: "Subscriber Removed",
         description: "Newsletter subscriber has been removed successfully",

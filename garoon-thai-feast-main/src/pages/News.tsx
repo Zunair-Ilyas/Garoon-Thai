@@ -5,8 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/components/Layout";
 import { Calendar, Clock, ArrowRight, Newspaper } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { articlesService, newsletterService, contactService } from "@/lib/dataService";
 
 interface Article {
   id: string;
@@ -42,13 +42,7 @@ const News = () => {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('articles')
-        .select('*')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await articlesService.getPublishedArticles();
       setArticles(data || []);
     } catch (error) {
       console.error('Error fetching articles:', error);
@@ -100,29 +94,11 @@ const News = () => {
 
     setSubscribing(true);
     try {
-      console.log('Attempting to subscribe email:', email);
-      
-      // Insert directly into database
-      const { data: dbData, error: dbError } = await supabase
-        .from('member_subscriptions')
-        .insert([{
-          email: email,
-          is_subscribed: true,
-          subscribed_at: new Date().toISOString()
-        }])
-        .select();
-
-      if (dbError) {
-        console.error('Database insert failed:', dbError);
-        toast({
-          title: "Error",
-          description: "Failed to subscribe. Please try again later.",
-          variant: "destructive",
-        });
-        return;
+      if (!email.includes('@')) {
+        throw new Error('Invalid email');
       }
 
-      console.log('Successfully added to database:', dbData);
+      await newsletterService.subscribe(email);
       toast({
         title: "Success!",
         description: "Thank you for subscribing to our newsletter!",
@@ -130,41 +106,11 @@ const News = () => {
       setEmail("");
     } catch (error) {
       console.error('Error subscribing:', error);
-      
-      // Fallback: Store locally only
-      try {
-        const subscriptions = JSON.parse(localStorage.getItem('newsletter_subscriptions') || '[]');
-        const existingSubscription = subscriptions.find((sub: any) => sub.email === email);
-        
-        if (!existingSubscription) {
-          const newSubscription = {
-            email: email,
-            is_subscribed: true,
-            subscribed_at: new Date().toISOString()
-          };
-          subscriptions.push(newSubscription);
-          localStorage.setItem('newsletter_subscriptions', JSON.stringify(subscriptions));
-          
-          toast({
-            title: "Success!",
-            description: "Thank you for subscribing to our newsletter! (Stored locally)",
-          });
-          setEmail("");
-        } else {
-          toast({
-            title: "Already Subscribed",
-            description: "This email is already subscribed to our newsletter",
-            variant: "destructive",
-          });
-        }
-      } catch (localError) {
-        console.error('Local storage error:', localError);
-        toast({
-          title: "Error",
-          description: "Failed to subscribe. Please try again later.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: "Failed to subscribe. Please try again later.",
+        variant: "destructive",
+      });
     } finally {
       setSubscribing(false);
     }
@@ -193,25 +139,11 @@ const News = () => {
 
     setSendingMessage(true);
     try {
-      // Store contact form submission in contact_messages table
-      const { error: dbError } = await supabase
-        .from('contact_messages')
-        .insert([
-          {
-            name: contactForm.name,
-            email: contactForm.email,
-            message: contactForm.message
-          }
-        ]);
-
-      if (dbError) {
-        toast({
-          title: "Error",
-          description: "Failed to send message. Please try again later.",
-          variant: "destructive",
-        });
-        return;
-      }
+      await contactService.submitMessage(
+        contactForm.name,
+        contactForm.email,
+        contactForm.message
+      );
 
       toast({
         title: "Message Sent Successfully!",

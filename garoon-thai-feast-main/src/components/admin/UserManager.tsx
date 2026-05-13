@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Mail, Calendar, Search, Download, Trash2 } from "lucide-react";
+import { profileService, newsletterService } from "@/lib/dataService";
 
 interface Profile {
   id: string;
@@ -38,12 +39,7 @@ const UserManager = () => {
 
   const fetchProfiles = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await profileService.getProfiles();
       setProfiles(data || []);
     } catch (error) {
       console.error('Error fetching profiles:', error);
@@ -57,12 +53,7 @@ const UserManager = () => {
 
   const fetchSubscriptions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('member_subscriptions')
-        .select('*')
-        .order('subscribed_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await newsletterService.getSubscribers();
       setSubscriptions(data || []);
     } catch (error) {
       console.error('Error fetching subscriptions:', error);

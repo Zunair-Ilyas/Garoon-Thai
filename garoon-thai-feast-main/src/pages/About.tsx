@@ -8,9 +8,9 @@ import { MapPin, Phone, Mail, Clock, Users, Award, Heart, Utensils } from "lucid
 import chefPortrait from "../assets/Chef.jpg";
 import restaurantInterior from "@/assets/restaurant-interior.jpg";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import mai_and_gong from '../assets/mai_and_gong.jpg'
+import { contactService } from "@/lib/dataService";
 
 const About = () => {
   const values = [
@@ -77,11 +77,8 @@ const About = () => {
   useEffect(() => {
     const fetchContactInfo = async () => {
       try {
-        const { data, error } = await supabase
-          .from('contact_info')
-          .select('*')
-          .maybeSingle();
-        if (error || !data) {
+        const data = await contactService.getContactInfo();
+        if (!data) {
           setContactInfo({ address: null, phone: null, email: null, business_hours: {} });
         } else {
           const parsed = { ...data };
@@ -135,33 +132,18 @@ const About = () => {
     }
     setSendingMessage(true);
     try {
-      const { error: dbError } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- temporary until contact_messages is added to generated Supabase types
-        .from('contact_messages' as any) // cast to any until types include this table
-        .insert([
-          {
-            name,
-            email: contactForm.email,
-            message: contactForm.message
-          }
-        ]);
-      if (dbError) {
-        toast({
-          title: "Error",
-          description: "Failed to send message. Please try again later.",
-          variant: "destructive",
-        });
-        return;
-      }
+      await contactService.submitMessage(name, contactForm.email, contactForm.message);
+
       toast({
         title: "Message Sent Successfully!",
         description: "Your message has been sent and will be reviewed by our team. We'll get back to you soon!",
       });
       setContactForm({ firstName: "", lastName: "", email: "", subject: "", message: "" });
-    } catch {
+    } catch (error) {
+      console.error('Error sending message:', error);
       toast({
-        title: "Message Saved",
-        description: "Your message has been saved locally. Please contact us directly if urgent.",
+        title: "Error",
+        description: "Failed to send message. Please try again later.",
         variant: "destructive",
       });
     } finally {

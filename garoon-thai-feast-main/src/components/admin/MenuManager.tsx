@@ -15,6 +15,7 @@ import { Plus, Edit, Trash2, DollarSign, Eye, EyeOff, Search, X } from "lucide-r
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { menuService } from "@/lib/dataService";
 
 const menuItemSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -63,19 +64,7 @@ interface Category {
 
 const fetchMenuItems = async (setMenuItems, toast) => {
   try {
-    const { data, error } = await supabase
-      .from('menu_items')
-      .select('*')
-      .order('name');
-    if (error) {
-      console.error('Error fetching menu items:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch menu items",
-        variant: "destructive",
-      });
-      return;
-    }
+    const data = await menuService.getMenuItems();
     setMenuItems(data || []);
   } catch (error) {
     console.error('Error fetching menu items:', error);
@@ -89,14 +78,7 @@ const fetchMenuItems = async (setMenuItems, toast) => {
 
 const fetchCategories = async (setCategories, toast) => {
   try {
-    const { data, error } = await supabase
-      .from('menu_categories')
-      .select('*')
-      .order('display_order');
-    if (error) {
-      console.error('Error fetching categories:', error);
-      return;
-    }
+    const data = await menuService.getCategories();
     setCategories(data || []);
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -246,6 +228,7 @@ const MenuManager = () => {
       });
       setImageFile(null);
       setImagePreview(null);
+      menuService.invalidateCache(); // Invalidate menu cache
       await fetchMenuItems(setMenuItems, toast);
     } catch (error) {
       console.error('Error saving menu item:', error);
@@ -299,6 +282,7 @@ const MenuManager = () => {
           title: "Success",
           description: "Menu item deleted successfully",
         });
+        menuService.invalidateCache(); // Invalidate menu cache
         fetchMenuItems(setMenuItems, toast);
       } catch (error) {
         console.error('Error deleting menu item:', error);

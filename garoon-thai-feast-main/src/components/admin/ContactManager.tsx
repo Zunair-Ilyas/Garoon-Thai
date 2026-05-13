@@ -10,6 +10,7 @@ import { Save, MapPin, Phone, Mail, Clock } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { contactService } from "@/lib/dataService";
 
 const contactSchema = z.object({
   address: z.string().optional(),
@@ -48,13 +49,8 @@ const ContactManager = () => {
 
   const fetchContactInfo = async () => {
     try {
-      const { data, error } = await supabase
-        .from('contact_info')
-        .select('*')
-        .maybeSingle();
+      const data = await contactService.getContactInfo();
 
-      if (error) throw error;
-      
       if (data) {
         setContactInfo(data);
         setValue("address", data.address || "");
@@ -114,6 +110,7 @@ const ContactManager = () => {
         description: "Contact information updated successfully",
       });
       
+      contactService.invalidateCache(); // Invalidate contact cache
       fetchContactInfo();
     } catch (error) {
       console.error('Error saving contact info:', error);

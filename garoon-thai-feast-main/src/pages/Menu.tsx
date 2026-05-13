@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/components/Layout";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import React from "react";
@@ -12,6 +11,7 @@ import glutenFreeIcon from "@/assets/gluten_free.png";
 import veganIcon from "@/assets/vegan.png";
 import vegetarianIcon from "@/assets/vegetarian.png";
 import spicyIcon from "@/assets/spicy.png";
+import { menuService } from "@/lib/dataService";
 
 interface Category {
   id: string;
@@ -59,21 +59,11 @@ const Menu = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('menu_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
-      // This throw is caught locally, safe to ignore warning
-      if (categoriesError) throw categoriesError;
-      // Fetch menu items
-      const { data: menuItemsData, error: menuItemsError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('is_active', true)
-        .order('name', { ascending: true });
-      if (menuItemsError) throw menuItemsError;
+      // Use menuService for caching
+      const [categoriesData, menuItemsData] = await Promise.all([
+        menuService.getCategories(),
+        menuService.getMenuItems(),
+      ]);
       setCategories(categoriesData || []);
       setMenuItems(menuItemsData || []);
     } catch (error) {
